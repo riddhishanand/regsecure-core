@@ -186,19 +186,17 @@ if "active_matrix" not in st.session_state or st.session_state.get("current_agen
     st.session_state["active_matrix"] = generate_local_fallback(reg_key)
     st.session_state["current_agency"] = reg_key
 
-c_refresh, c_status = st.columns(2)
-with c_refresh:
-    if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
-        with st.spinner("Quoting remote schema logs..."):
-            live_items = pull_live_rss(rss_feed_mapping[reg_key])
-            if live_items:
-                st.session_state["active_matrix"] = live_items
-                st.toast("Live RSS Sync Successful!", icon="⚡")
-                st.rerun()
-            else:
-                st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
+# ✅ CONTROL TOGGLE: Forces the page state engine to evaluate and draw content immediately
+initialize_console = st.checkbox("🔓 Initialize Platform Workspace Console", value=True)
 
-raw_data_items = st.session_state["active_matrix"]
-processed_records = []
-for item in raw_data_items:
-    risk, action = assign_risk_and_action(item["title"], reg_key)
+if initialize_console:
+    c_refresh, c_status = st.columns(2)
+    with c_refresh:
+        if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
+            with st.spinner("Quoting remote schema logs..."):
+                live_items = pull_live_rss(rss_feed_mapping[reg_key])
+                if live_items:
+                    st.session_state["active_matrix"] = live_items
+                    st.toast("Live RSS Sync Successful!", icon="⚡")
+                    st.rerun()
+                else:
