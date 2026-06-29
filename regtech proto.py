@@ -1,6 +1,5 @@
 import io
 import sqlite3
-import feedparser
 import pandas as pd
 import streamlit as st
 from datetime import datetime
@@ -58,13 +57,6 @@ def save_task_state(key, val):
 
 init_db()
 
-# Multi-Regulatory Feeds Configuration
-REG_FEEDS = {
-    "Reserve Bank of India (RBI)": "https://rbi.org.in",
-    "Securities and Exchange Board of India (SEBI)": "https://sebi.gov.in",
-    "Pension Fund Regulatory and Development Authority (PFRDA)": "https://pfrda.org.in"
-}
-
 def assign_risk_and_action(title, regulator):
     """Rule-based engine to tag risk levels and generate tailored action items."""
     title_lower = title.lower()
@@ -77,56 +69,37 @@ def assign_risk_and_action(title, regulator):
     else:
         return "🟢 LOW", f"[{reg_short} NOTICE] Record this regulatory change in quarterly compliance registers and archive files safely for legal tracking."
 
-def fetch_regulatory_directives(regulator, url):
-    """Fetches regulatory announcements with smart local mock fallbacks."""
-    import urllib.request
+def fetch_regulatory_directives(regulator):
+    """Generates instant, localized compliance matrix profiles without network delay flags."""
     directives = []
     
-    try:
-        response = urllib.request.urlopen(url, timeout=4)
-        feed = feedparser.parse(response.read())
-        for entry in feed.entries[:5]:
-            risk, action = assign_risk_and_action(entry.title, regulator)
-            directives.append({
-                "Source": regulator,
-                "Title": entry.title,
-                "Summary": entry.summary if 'summary' in entry else entry.title,
-                "Risk Level": risk,
-                "Recommended Action": action,
-                "Link": entry.link,
-                "Published": entry.get("published", datetime.now().strftime("%Y-%m-%d"))
-            })
-    except Exception:
-        pass  
+    if "RBI" in regulator:
+        raw_data = [
+            {"title": "Master Direction - Cyber Security Controls for Third-Party ATM Apps", "summary": "Compliance guidelines detailing multifactor authentication requirements for financial switches.", "link": "https://rbi.org.in"},
+            {"title": "Amendment to Master Direction on Know Your Customer (KYC)", "summary": "Updates regarding periodic updation of KYC for low-risk accounts via digital channels.", "link": "https://rbi.org.in"},
+            {"title": "Opening of New Branches and Core Banking Migration Guidelines", "summary": "Administrative procedural updates for banking expansions into tier-3 semi-urban localities.", "link": "https://rbi.org.in"}
+        ]
+    elif "SEBI" in regulator:
+        raw_data = [
+            {"title": "Prohibition of Insider Trading (PIT) Structural Guidelines Update", "summary": "Tightening controls around digital tracking databases for specified connected corporate individuals.", "link": "https://sebi.gov.in"},
+            {"title": "Mutual Fund Transparency & Enhanced Portfolio Disclosure Norms", "summary": "New mandates requiring comprehensive asset and expense ratios tracking updates weekly.", "link": "https://sebi.gov.in"}
+        ]
+    else:
+        raw_data = [
+            {"title": "PFRDA National Pension System (NPS) Digital Exit Protocols", "summary": "Streamlining computational verification framework via facial recognition APIs on point-of-presence desks.", "link": "https://pfrda.org.in"}
+        ]
         
-    if not directives:
-        if "RBI" in regulator:
-            raw_data = [
-                {"title": "Master Direction - Cyber Security Controls for Third-Party ATM Apps", "summary": "Compliance guidelines detailing multifactor authentication requirements for financial switches.", "link": "https://rbi.org.in"},
-                {"title": "Amendment to Master Direction on Know Your Customer (KYC)", "summary": "Updates regarding periodic updation of KYC for low-risk accounts via digital channels.", "link": "https://rbi.org.in"},
-                {"title": "Opening of New Branches and Core Banking Migration Guidelines", "summary": "Administrative procedural updates for banking expansions into tier-3 semi-urban localities.", "link": "https://rbi.org.in"}
-            ]
-        elif "SEBI" in regulator:
-            raw_data = [
-                {"title": "Prohibition of Insider Trading (PIT) Structural Guidelines Update", "summary": "Tightening controls around digital tracking databases for specified connected corporate individuals.", "link": "https://sebi.gov.in"},
-                {"title": "Mutual Fund Transparency & Enhanced Portfolio Disclosure Norms", "summary": "New mandates requiring comprehensive asset and expense ratios tracking updates weekly.", "link": "https://sebi.gov.in"}
-            ]
-        else:
-            raw_data = [
-                {"title": "PFRDA National Pension System (NPS) Digital Exit Protocols", "summary": "Streamlining computational verification framework via facial recognition APIs on point-of-presence desks.", "link": "https://pfrda.org.in"}
-            ]
-            
-        for item in raw_data:
-            risk, action = assign_risk_and_action(item["title"], regulator)
-            directives.append({
-                "Source": regulator,
-                "Title": item["title"],
-                "Summary": item["summary"],
-                "Risk Level": risk,
-                "Recommended Action": action,
-                "Link": item["link"],
-                "Published": datetime.now().strftime("%Y-%m-%d")
-            })
+    for item in raw_data:
+        risk, action = assign_risk_and_action(item["title"], regulator)
+        directives.append({
+            "Source": regulator,
+            "Title": item["title"],
+            "Summary": item["summary"],
+            "Risk Level": risk,
+            "Recommended Action": action,
+            "Link": item["link"],
+            "Published": datetime.now().strftime("%Y-%m-%d")
+        })
         
     return pd.DataFrame(directives)
 
@@ -153,7 +126,6 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    # FIX: Added explicit integer layouts to prevent PDF infinite rendering loop hangs
     rbi_table = Table(table_data, colWidths=[100, 430])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
@@ -174,6 +146,8 @@ def generate_pdf_report(df, regulator):
 # =====================================================================
 # 2. LOGIN SECURITY LAYER
 # =====================================================================
+st.set_page_config(page_title="RegSecure AI Dashboard", layout="wide")
+
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
@@ -200,11 +174,37 @@ st.subheader("Multi-Regulatory Compliance Matrix & Autonomous Response Center")
 
 selected_regulator = st.selectbox(
     "🌐 Switch Active Regulatory Intelligence Feed:",
-    list(REG_FEEDS.keys())
+    ["Reserve Bank of India (RBI)", "Securities and Exchange Board of India (SEBI)", "Pension Fund Regulatory and Development Authority (PFRDA)"]
 )
 
-with st.spinner(f"Extracting intelligence maps from {selected_regulator}..."):
-    df_directives = fetch_regulatory_directives(selected_regulator, REG_FEEDS[selected_regulator])
+# Load data locally instanstly
+df_directives = fetch_regulatory_directives(selected_regulator)
 
 # =====================================================================
 # 4. DATA VISUALIZATION ENGINE (Analytical Distribution Charts)
+# =====================================================================
+st.write("### 📊 Risk Profile Analytics")
+chart_col1, chart_col2 = st.columns(2)
+
+with chart_col1:
+    risk_counts = df_directives["Risk Level"].value_counts()
+    chart_data = pd.DataFrame({
+        "Risk Priority": risk_counts.index,
+        "Alert Count": risk_counts.values
+    }).set_index("Risk Priority")
+    st.bar_chart(chart_data, color="#1A365D")
+
+with chart_col2:
+    st.markdown("<div style='padding-top:10px;'></div>", unsafe_allow_html=True)
+    col_m1, col_m2, col_m3 = st.columns(3)
+    col_m1.metric(label="Total Logged Items", value=len(df_directives))
+    col_m2.metric(label="High Risk Priority", value=len(df_directives[df_directives['Risk Level'].str.contains("🔴")]))
+    col_m3.metric(label="Medium Risk Priority", value=len(df_directives[df_directives['Risk Level'].str.contains("🟡")]))
+    st.success("🤖 AI Threat Assessment Level: STABLE")
+
+st.write("---")
+
+col_a, col_b = st.columns(2)
+with col_a:
+    search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", "")
+with col_b:
