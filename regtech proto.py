@@ -38,7 +38,7 @@ def get_task_state(key, default=False):
         row = cursor.fetchone()
         conn.close()
         if row is not None:
-            return bool(row[0])
+            return bool(row)
     except Exception:
         pass
     return default
@@ -155,7 +155,6 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    # Clean parameter assignment handles the rendering correctly
     rbi_table = Table(table_data, colWidths=[100, 430])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
@@ -202,6 +201,6 @@ def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
         server.login(sender_username, sender_password)
         server.sendmail(sender_username, recipient_email, msg.as_string())
         server.quit()
-            
         return True, "Email successfully encrypted and transmitted down active relay loops."
     except Exception as e:
+        return False, f"Outbound transport pipeline exception caught: {str(e)}"
