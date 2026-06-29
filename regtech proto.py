@@ -155,7 +155,7 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    # FIXED: Explicit column widths specified to ensure perfect parsing alignment
+    # ✅ FIX: Explicit numeric size sequence assigned to prevent syntax collapse
     rbi_table = Table(table_data, colWidths=[100, 430])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
