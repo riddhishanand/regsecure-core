@@ -36,7 +36,7 @@ def get_task_state(key, default=False):
         row = cursor.fetchone()
         conn.close()
         if row is not None:
-            return bool(row)
+            return bool(row[0])
     except Exception:
         pass
     return default
@@ -153,7 +153,7 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    # Explicit column widths to ensure correct layout scaling inside ReportLab
+    # Corrected width layout configuration list to prevent document rendering loop errors
     rbi_table = Table(table_data, colWidths=[100, 430])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
@@ -209,4 +209,3 @@ with st.spinner(f"Extracting intelligence maps from {selected_regulator}..."):
     df_directives = fetch_regulatory_directives(selected_regulator, REG_FEEDS[selected_regulator])
 
 # =====================================================================
-# 4. DATA VISUALIZATION ENGINE (Analytical Distribution Charts)
