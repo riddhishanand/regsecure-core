@@ -1,6 +1,7 @@
 import io
 import sqlite3
 import smtplib  
+import socket  # Added for absolute connection timeout control
 from email.mime.multipart import MIMEMultipart  
 from email.mime.text import MIMEText  
 from email.mime.application import MIMEApplication  
@@ -35,7 +36,7 @@ def get_task_state(key, default=False):
         row = cursor.fetchone()
         conn.close()
         if row is not None:
-            return bool(row)
+            return bool(row[0])
     except Exception:
         pass
     return default
@@ -75,6 +76,11 @@ def fetch_regulatory_directives(regulator):
     }
     reg_key = "RBI" if "RBI" in regulator else ("SEBI" if "SEBI" in regulator else "PFRDA")
     feed_url = rss_feed_mapping[reg_key]
+    
+    # Force a strict global network timeout threshold of 2 seconds
+    original_timeout = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(2.0)
+    
     try:
         feed = feedparser.parse(feed_url)
         if feed.entries:
@@ -87,6 +93,10 @@ def fetch_regulatory_directives(regulator):
                 })
     except Exception:
         pass
+    finally:
+        # Safely restore standard default socket conditions
+        socket.setdefaulttimeout(original_timeout)
+        
     if not directives:
         if reg_key == "RBI":
             directives = [
@@ -103,6 +113,7 @@ def fetch_regulatory_directives(regulator):
             directives = [
                 {"title": "PFRDA National Pension System (NPS) Digital Exit Protocols", "summary": "Streamlining computational verification framework via facial recognition APIs.", "link": "https://pfrda.org.in"}
             ]
+            
     processed_records = []
     for item in directives:
         risk, action = assign_risk_and_action(item["title"], regulator)
@@ -195,11 +206,3 @@ combined_df = fetch_regulatory_directives(selected_agency)
 search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", key="global_search_input")
 if search_query:
     combined_df = combined_df[
-        combined_df['Title'].str.contains(search_query, case=False, na=False) |
-        combined_df['Summary'].str.contains(search_query, case=False, na=False)
-    ]
-
-st.markdown("---")
-st.subheader("📊 Risk Profile Analytics")
-
-total_directives = len(combined_df)
