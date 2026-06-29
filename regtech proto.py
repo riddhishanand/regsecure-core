@@ -76,10 +76,8 @@ def fetch_regulatory_directives(regulator):
     }
     reg_key = "RBI" if "RBI" in regulator else ("SEBI" if "SEBI" in regulator else "PFRDA")
     feed_url = rss_feed_mapping[reg_key]
-    
     original_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(2.0)
-    
     try:
         feed = feedparser.parse(feed_url)
         if feed.entries:
@@ -94,7 +92,6 @@ def fetch_regulatory_directives(regulator):
         pass
     finally:
         socket.setdefaulttimeout(original_timeout)
-        
     if not directives:
         if reg_key == "RBI":
             directives = [
@@ -111,7 +108,6 @@ def fetch_regulatory_directives(regulator):
             directives = [
                 {"title": "PFRDA National Pension System (NPS) Digital Exit Protocols", "summary": "Streamlining computational verification framework via facial recognition APIs.", "link": "https://pfrda.org.in"}
             ]
-            
     processed_records = []
     for item in directives:
         risk, action = assign_risk_and_action(item["title"], regulator)
@@ -203,5 +199,4 @@ combined_df = fetch_regulatory_directives(selected_agency)
 
 search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", key="global_search_input")
 
-# ✅ FIX: Flattened filter expression into a single line to prevent trailing bracket syntax truncation errors
-if search_query:
+# ✅ FIX PERMANENTLY: Single flat statement bypasses indentation requirement completely
