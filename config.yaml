@@ -12,3 +12,6 @@ cookie:
   expiry_days: 30
   key: regsecure_encryption_key_signature
   name: regsecure_auth_cookie
+pre-authorized:
+  emails:
+    - alpha_compliance@enterprise.com
