@@ -3,11 +3,11 @@ credentials:
     officer_alpha:
       email: alpha_compliance@enterprise.com
       name: Compliance Officer Alpha
-      password: "$2b$12$iy18dC9TsrCJQScxmRFlpejgETAHz21fp6nzK5C/wTYO8G7RZfeRe"
+      password: "AlphaPass123"
     manager_beta:
       email: beta_risk@corporation.com
       name: Risk Manager Beta
-      password: "$2b$12$gN7ViqmJ2fIyONR7VNIQ7.RgkrbjQU94XQ.Pdic4hkdXmLiqdJVVS"
+      password: "BetaPass456"
 cookie:
   expiry_days: 30
   key: regsecure_encryption_key_signature
