@@ -3,4 +3,4 @@ pandas
 sqlalchemy
 feedparser
 spacy
-https://github.com
+
