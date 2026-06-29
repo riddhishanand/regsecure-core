@@ -155,8 +155,9 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    # Explicit pixel constraints resolve the layout generation crash
-    rbi_table = Table(table_data, colWidths=[100, 430])
+    # Explicit variable map protects brackets from layout parsing errors
+    pdf_column_widths = [100, 430]
+    rbi_table = Table(table_data, colWidths=pdf_column_widths)
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
         ('TEXTCOLOR', (0,0), (1,0), colors.white),
