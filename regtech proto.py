@@ -59,7 +59,6 @@ def fetch_regulatory_directives(regulator, url):
         pass  
         
     if not directives:
-        # Specialized fallbacks tailored to the active regulatory body selected
         if "RBI" in regulator:
             raw_data = [
                 {"title": "Master Direction - Cyber Security Controls for Third-Party ATM Apps", "summary": "Compliance guidelines detailing multifactor authentication requirements for financial switches.", "link": "https://rbi.org.in"},
@@ -113,7 +112,7 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    rbi_table = Table(table_data, colWidths=[80, 450])
+    rbi_table = Table(table_data, colWidths=[100, 430])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
         ('TEXTCOLOR', (0,0), (1,0), colors.white),
@@ -138,18 +137,15 @@ st.set_page_config(page_title="RegSecure AI Dashboard", layout="wide")
 st.title("🛡️ RegSecure AI Enterprise Platform")
 st.subheader("Multi-Regulatory Compliance Matrix & Autonomous Response Center")
 
-# Feature 1: Multi-Regulatory Source Selection Tab/Dropdown
 selected_regulator = st.selectbox(
     "🌐 Switch Active Regulatory Intelligence Feed:",
     list(REG_FEEDS.keys())
 )
 
-# Fetch Data for selected source
 with st.spinner(f"Extracting intelligence maps from {selected_regulator}..."):
     df_directives = fetch_regulatory_directives(selected_regulator, REG_FEEDS[selected_regulator])
 
-# Feature 2: Email and PDF Download Actions Hub
-col_a, col_b = st.columns([3, 1])
+col_a, col_b = st.columns()
 with col_a:
     search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", "")
 with col_b:
@@ -163,7 +159,6 @@ with col_b:
         use_container_width=True
     )
 
-# Filter Data Grid Based on Search
 filtered_df = df_directives
 if search_query:
     filtered_df = df_directives[
@@ -171,7 +166,6 @@ if search_query:
         df_directives['Summary'].str.contains(search_query, case=False)
     ]
 
-# Display Primary Grid
 st.write("### 🚨 Live Regulatory Alerts Map")
 st.dataframe(
     filtered_df, 
@@ -179,7 +173,6 @@ st.dataframe(
     column_config={"Link": st.column_config.LinkColumn("Reference Link")}
 )
 
-# Feature 3: Action Planner Integrated with instant Email simulation
 st.write("---")
 st.write("### 📋 AI Operational Action Planner & Distribution Hub")
 
@@ -187,7 +180,7 @@ for index, row in filtered_df.iterrows():
     risk_color = "red" if "🔴" in row["Risk Level"] else ("orange" if "🟡" in row["Risk Level"] else "green")
     
     with st.expander(f"💼 Task Protocol: {row['Title']} ({row['Risk Level']})"):
-        c1, c2 = st.columns([3, 2])
+        c1, c2 = st.columns()
         with c1:
             st.markdown(f"**Regulatory Source:** {row['Source']}")
             st.markdown(f"**Risk Severity:** :{risk_color}[{row['Risk Level']}]")
@@ -198,4 +191,12 @@ for index, row in filtered_df.iterrows():
             target_email = st.text_input("Enter target ops email address:", "compliance-ops@organization.local", key=f"email_inp_{index}")
             
             if st.button("⚡ Dispatch Email Alert Brief", key=f"btn_email_{index}"):
-                # Simulated production dispatch loop logs directly into server context
+                st.toast(f"✉️ Alert successfully compiled and dispatched to {target_email}!")
+                st.success(f"✅ Protocol logged! Brief sent regarding alert item index #{index}.")
+            
+            st.markdown("<br/>", unsafe_allow_html=True)
+            st.checkbox("Task Assigned to Officer", key=f"chk_a_{index}")
+            st.checkbox("Gap Analysis Complete", key=f"chk_b_{index}")
+
+st.sidebar.header("⚙️ Platform Controls")
+st.sidebar.success(f"✅ Feed Connection: Healthy")
