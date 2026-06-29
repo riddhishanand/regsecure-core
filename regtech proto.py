@@ -19,8 +19,7 @@ class LightDoc:
 
 # Initialize the fallback processing pipeline
 nlp = LightNLP()
-import os
-import subprocess
+
 import sys
 import spacy
 
