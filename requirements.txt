@@ -1,5 +1,3 @@
 streamlit
 pandas
 feedparser
-spacy
-https://github.com
