@@ -201,4 +201,3 @@ with c_refresh:
 raw_data_items = st.session_state["active_matrix"]
 processed_records = []
 for item in raw_data_items:
-    risk, action = assign_risk_and_action(item["title"], reg_key)
