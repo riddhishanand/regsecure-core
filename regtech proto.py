@@ -1,5 +1,5 @@
 import io
-import urllib.request  
+import urllib.request, urllib.parse.  
 import pandas as pd
 import feedparser
 import yaml
