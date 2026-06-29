@@ -177,7 +177,6 @@ selected_regulator = st.selectbox(
     ["Reserve Bank of India (RBI)", "Securities and Exchange Board of India (SEBI)", "Pension Fund Regulatory and Development Authority (PFRDA)"]
 )
 
-# Load data locally instanstly
 df_directives = fetch_regulatory_directives(selected_regulator)
 
 # =====================================================================
@@ -208,3 +207,4 @@ col_a, col_b = st.columns(2)
 with col_a:
     search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", "")
 with col_b:
+    st.write("<div style='padding-top:25px;'></div>", unsafe_allow_html=True)
