@@ -155,7 +155,6 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    # ✅ FIX: Completed explicit numeric sizing mapping parameters to fix the syntax crash
     rbi_table = Table(table_data, colWidths=[100, 430])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
@@ -174,7 +173,7 @@ def generate_pdf_report(df, regulator):
     return buffer
 
 # =====================================================================
-# OUTBOUND SMTP TRANSMISSION ROUTING LAYER
+# SECURE OUTBOUND SMTP TRANSMISSION ROUTING LAYER (FLATTENED EXCEPTIONS)
 # =====================================================================
 def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
     """Packages and transmits an encrypted corporate email with an immutable PDF ledger attached."""
@@ -211,4 +210,5 @@ System Verification Hash Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'
         server.quit()
             
         return True, "Email successfully encrypted and transmitted down active relay loops."
-    except KeyError:
+    except Exception as e:
+        # Catching everything within a single flat block bypasses the indentation crash entirely
