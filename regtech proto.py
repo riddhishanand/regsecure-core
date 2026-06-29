@@ -157,7 +157,11 @@ def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
         email_body = f"Greetings Risk Management Desk,\n\nThe RegSecure AI automated threat engine has parsed new system compliance records for {agency_name}.\n\nPlease review the attached immutable, executive-ready PDF audit log ledger instantly to confirm required system updates.\n\nSystem Verification Hash Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         msg.attach(MIMEText(email_body, 'plain'))
         pdf_buffer.seek(0)
-        attachment = MIMEApplication(pdf_buffer.read(), _subtype="pdf")
+        # Change this line:
+c_refresh, c_status = st.columns()
+
+# To this:
+c_refresh, c_status = st.columns(2)
         attachment.add_header('Content-Disposition', 'attachment', filename=f"RegSecure_Ledger_{datetime.now().strftime('%Y%m%d')}.pdf")
         msg.attach(attachment)
         server = smtplib.SMTP(smtp_server, smtp_port)
