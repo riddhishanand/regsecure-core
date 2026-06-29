@@ -195,7 +195,7 @@ with left_panel:
         subscription_price = "7999"  
         
         upi_url = f"upi://pay?pa={my_upi_id}&pn={business_name.replace(' ', '%20')}&am={subscription_price}&cu=INR"
-        qr_code_image_url = f"https://qrserver.com{upi_url}"
+        qr_code_image_url = f"https://quickchart.io{urllib.parse.quote(upi_url)}&size=200"
         
         with st.container(border=True):
             st.markdown("#### 💳 Scan to Unlock Premium Tier Access")
