@@ -48,7 +48,6 @@ elif authentication_status:
     # SECURE ENTERPRISE ZONE (Only accessible to authenticated users)
     # -------------------------------------------------------------
     
-    # Database-free state managers connected directly to the user session
     if "task_database" not in st.session_state:
         st.session_state["task_database"] = {}
 
@@ -147,7 +146,6 @@ elif authentication_status:
     def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
         return True, f"Success! Immutable PDF audit ledger report safely routed to {recipient_email} via RegSecure AI secure relay channels."
 
-    # --- Setup Interactive Layout Frame Matrix ---
     st.title("🛡️ RegSecure AI Enterprise Platform")
     st.markdown("### Multi-Regulatory Compliance Matrix & Autonomous Response Center")
 
@@ -157,18 +155,13 @@ elif authentication_status:
         "PFRDA": "https://pfrda.org.in"
     }
 
-    # Custom Personalized User Identity Sidebar
     with st.sidebar:
         st.markdown(f"### 👤 Connected: {name}")
         st.markdown(f"**Enterprise Token:** `{username}`")
         st.markdown("---")
-        
-        # Injected Feed Switch inside navigation drawer
         reg_key = st.selectbox("Switch Active Intelligence Feed:", ["Reserve Bank of India (RBI)", "SEBI", "PFRDA"])
         reg_short_key = "RBI" if "rbi" in reg_key.lower() else ("SEBI" if "sebi" in reg_key.lower() else "PFRDA")
-        
         st.markdown("---")
-        # Global Sign-out action router
         authenticator.logout('Sign Out of Secure Portal', 'main')
 
     if "active_matrix" not in st.session_state or st.session_state.get("current_agency") != reg_short_key:
@@ -195,3 +188,14 @@ elif authentication_status:
             "Title": entry["title"],
             "Summary": entry["summary"],
             "Link": entry["link"],
+            "Risk Level": risk,
+            "Recommended Action": action
+        })
+
+    df_alerts = pd.DataFrame(processed_alerts)
+
+    left_panel, right_panel = st.columns([1, 2.2], gap="large")
+
+    with left_panel:
+        st.markdown("### 📥 Report Execution Desk")
+        if not df_alerts.empty:
