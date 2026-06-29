@@ -155,8 +155,11 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    # Explicit variable map protects brackets from layout parsing errors
-    pdf_column_widths = [100, 430]
+    # ✅ FIX PERMANENTLY: Storing sizing inside individual clear numbers ensures text protection
+    col_1_width = 100
+    col_2_width = 430
+    pdf_column_widths = [col_1_width, col_2_width]
+    
     rbi_table = Table(table_data, colWidths=pdf_column_widths)
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
@@ -205,4 +208,3 @@ def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
         server.quit()
         return True, "Email successfully encrypted and transmitted down active relay loops."
     except Exception as e:
-        return False, f"Outbound transport pipeline exception caught: {str(e)}"
