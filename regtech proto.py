@@ -15,10 +15,9 @@ from reportlab.lib import colors
 DB_FILE = "regsecure.db"
 
 def init_db():
-    """Initializes local secure storage tables for tasks and users."""
+    """Initializes local secure storage tables for tasks."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    # Create checklist persistence table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS task_states (
             task_key TEXT PRIMARY KEY,
@@ -57,17 +56,7 @@ def save_task_state(key, val):
     except Exception:
         pass
 
-# Initialize local database structures immediately
 init_db()
-
-# Lightweight internal NLP parser setup
-class LightNLP:
-    def __call__(self, text): return LightDoc(text)
-class LightDoc:
-    def __init__(self, text):
-        self.text = text
-        self.ents = []
-nlp = LightNLP()
 
 # Multi-Regulatory Feeds Configuration
 REG_FEEDS = {
@@ -164,7 +153,7 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    rbi_table = Table(table_data, colWidths=[120, 410])
+    rbi_table = Table(table_data, colWidths=[100, 420])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
         ('TEXTCOLOR', (0,0), (1,0), colors.white),
@@ -190,7 +179,6 @@ if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
 if not st.session_state["authenticated"]:
-    # Render full-screen login box interface
     st.markdown("<div style='padding-top:50px;'></div>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -215,3 +203,10 @@ selected_regulator = st.selectbox(
     "🌐 Switch Active Regulatory Intelligence Feed:",
     list(REG_FEEDS.keys())
 )
+
+with st.spinner(f"Extracting intelligence maps from {selected_regulator}..."):
+    df_directives = fetch_regulatory_directives(selected_regulator, REG_FEEDS[selected_regulator])
+
+# =====================================================================
+# 4. DATA VISUALIZATION ENGINE (Analytical Distribution Charts)
+# =====================================================================
