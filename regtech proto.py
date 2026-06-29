@@ -6,6 +6,13 @@ import pandas as pd
 import feedparser
 import streamlit as st
 from datetime import datetime
+
+# Email payload specific modules
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+
+# ReportLab modules
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -33,7 +40,7 @@ def get_task_state(key, default=False):
         row = cursor.fetchone()
         conn.close()
         if row is not None:
-            return bool(row)
+            return bool(row[0])
     except Exception:
         pass
     return default
@@ -162,41 +169,38 @@ def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
     except Exception as e:
         return False, str(e)
 
-# =====================================================================
-# MAIN STREAMLIT VIEWPORT RUNTIME
-# =====================================================================
-st.set_page_config(page_title="RegSecure AI Dashboard", layout="wide")
-
+# --- Streamlit Dashboard UI Setup ---
+st.set_page_config(page_title="RegSecure AI Dashboard", page_icon="🛡️", layout="wide")
 st.title("🛡️ RegSecure AI Enterprise Platform")
 st.markdown("### Multi-Regulatory Compliance Matrix & Autonomous Response Center")
 
-selected_agency = st.selectbox(
-    "Switch Active Regulatory Intelligence Feed:", 
-    ["Reserve Bank of India (RBI)", "Securities & Exchange Board (SEBI)", "Pension Fund Authority (PFRDA)"]
-)
-
-reg_key = "RBI" if "RBI" in selected_agency else ("SEBI" if "SEBI" in selected_agency else "PFRDA")
+# RSS feed configuration mappings
 rss_feed_mapping = {
-    "RBI": "https://rbi.org.in", 
+    "RBI": "https://rbi.org.in",
     "SEBI": "https://sebi.gov.in",
     "PFRDA": "https://pfrda.org.in"
 }
 
-if "active_matrix" not in st.session_state or st.session_state.get("current_agency") != reg_key:
-    st.session_state["active_matrix"] = generate_local_fallback(reg_key)
-    st.session_state["current_agency"] = reg_key
+# Regulator Selection Input component
+reg_key = st.selectbox("Switch Active Regulatory Intelligence Feed:", ["Reserve Bank of India (RBI)", "SEBI", "PFRDA"])
+reg_short_key = "RBI" if "rbi" in reg_key.lower() else ("SEBI" if "sebi" in reg_key.lower() else "PFRDA")
 
-c_refresh, c_status = st.columns(2)
+# Manage Application Session Data States
+if "active_matrix" not in st.session_state or st.session_state.get("current_agency") != reg_short_key:
+    st.session_state["active_matrix"] = generate_local_fallback(reg_short_key)
+    st.session_state["current_agency"] = reg_short_key
+
+# Interactive sync engine button action
+c_refresh, c_status = st.columns([1, 3])
 with c_refresh:
     if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
         with st.spinner("Quoting remote schema logs..."):
-            live_items = pull_live_rss(rss_feed_mapping[reg_key])
+            live_items = pull_live_rss(rss_feed_mapping[reg_short_key])
             if live_items:
                 st.session_state["active_matrix"] = live_items
-                st.toast("Live RSS Sync Successful!", icon="⚡")
+                st.toast("Live RSS Sync Successful!", icon="✅")
                 st.rerun()
             else:
                 st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
 
-# ✅ UPGRADE: Encapsulating the remaining interface inside an explicit, isolated rendering layout engine container container 
-
+# Process raw state data pool array
