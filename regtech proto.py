@@ -185,3 +185,4 @@ df_alerts = pd.DataFrame(processed_alerts)
 # --- New Live Filter System Layout ---
 search_query = st.text_input("🔍 Live Regulatory Query Filter Engine", placeholder="Search directives by keyword (e.g., Cyber, KYC, App...)")
 if search_query.strip():
+    df_alerts = df_alerts[df_alerts["Title"].str.contains(search_query, case=False) | df_alerts["Summary"].str.contains(search_query, case=False)]
