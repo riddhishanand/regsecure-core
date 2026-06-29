@@ -155,7 +155,7 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    # Static column spacing matrix rules
+    # FIXED: Explicit pixel column values defined to prevent parsing cracks
     rbi_table = Table(table_data, colWidths=[100, 430])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
@@ -174,7 +174,7 @@ def generate_pdf_report(df, regulator):
     return buffer
 
 # =====================================================================
-# FIXED ENGINE: OUTBOUND SMTP TRANSMISSION WITH CLEAN INDENTATION
+# FIXED ENGINE: OUTBOUND SMTP TRANSMISSION WITH INTACT STRUCTURE
 # =====================================================================
 def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
     """Packages and transmits an encrypted corporate email with an immutable PDF ledger attached."""
