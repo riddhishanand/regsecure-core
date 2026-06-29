@@ -1,22 +1,13 @@
 import feedparser
 import pandas as pd
-import importlib
-import subprocess
-import sys
+import streamlit as st
+import pandas as pd
+import feedparser
+import spacy
+from datetime import datetime
 
-# Safe import and auto-download for spaCy
-try:
-    import spacy
-except ImportError:
-    subprocess.run([sys.executable, "-m", "pip", "install", "spacy"])
-    import spacy
-
-# Safe loading for the English language model
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
-    nlp = spacy.load("en_core_web_sm")
+# Initialize English NLP model for processing
+nlp = spacy.load("en_core_web_sm")
 import os
 import subprocess
 import sys
