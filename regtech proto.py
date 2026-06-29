@@ -20,16 +20,6 @@ class LightDoc:
 # Initialize the fallback processing pipeline
 nlp = LightNLP()
 
-import sys
-import spacy
-
-# Automatically download the model if it's not already installed
-try:
-    nlp = spacy.load("en_core_web_sm")
-    # or if that fails:
-except OSError:
-    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
-nlp = spacy.load("en_core_web_sm")
 
 # Real live endpoint for RBI Notifications via RSS Feed
 RBI_RSS_URL = "https://rbi.org.in"
