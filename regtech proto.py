@@ -191,7 +191,25 @@ for idx, row in df_alerts.iterrows():
 
 st.sidebar.header("📥 Report Execution Desk")
 pdf_data_stream = generate_pdf_report(df_alerts, reg_short_key)
-
 st.sidebar.download_button(
     label="Generate Executive PDF Report Ledger",
     data=pdf_data_stream,
+    file_name=f"RegSecure_{reg_short_key}_Executive_Ledger.pdf",
+    mime="application/pdf",
+    use_container_width=True
+)
+
+st.sidebar.markdown("---")
+st.sidebar.header("📧 Security Distribution Engine")
+target_destination_email = st.sidebar.text_input("Executive Desk Delivery Address", placeholder="compliance@firm.com")
+
+if st.sidebar.button("Transmit Immutable Audit Records", use_container_width=True):
+    if not target_destination_email:
+        st.sidebar.error("Error: Please provide a valid production delivery target email address.")
+    else:
+        with st.spinner("Processing crypto-routing email layers..."):
+            success_status, output_message = dispatch_production_email(target_destination_email, pdf_data_stream, reg_short_key)
+            if success_status:
+                st.sidebar.success(output_message)
+            else:
+                st.sidebar.error(output_message)
