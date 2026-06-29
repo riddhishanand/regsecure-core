@@ -1,9 +1,22 @@
 import feedparser
 import pandas as pd
-import spacy
-from datetime import datetime
+import importlib
+import subprocess
+import sys
 
-# Initialize English NLP model for legal text keyword analysis
+# Safe import and auto-download for spaCy
+try:
+    import spacy
+except ImportError:
+    subprocess.run([sys.executable, "-m", "pip", "install", "spacy"])
+    import spacy
+
+# Safe loading for the English language model
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
+    nlp = spacy.load("en_core_web_sm")
 import os
 import subprocess
 import sys
