@@ -165,6 +165,20 @@ with c_refresh:
             else:
                 st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
 
+# --- Line 156-166 stay indented like this ---
+c_refresh, c_status = st.columns(2)
+with c_refresh:
+    if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
+        with st.spinner("Quoting remote schema logs..."):
+            live_items = pull_live_rss(rss_feed_mapping[reg_short_key])
+            if live_items:
+                st.session_state["active_matrix"] = live_items
+                st.toast("Live RSS Sync Successful!", icon="✅")
+                st.rerun()
+            else:
+                st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
+
+# --- Line 168 onwards MUST be completely unindented (0 spaces) ---
 data_pool = st.session_state["active_matrix"]
 processed_alerts = []
 for entry in data_pool:
@@ -178,15 +192,4 @@ for entry in data_pool:
     })
 
 df_alerts = pd.DataFrame(processed_alerts)
-
-high_count = len(df_alerts[df_alerts["Risk Level"].str.contains("HIGH")])
-med_count = len(df_alerts[df_alerts["Risk Level"].str.contains("MEDIUM")])
-low_count = len(df_alerts[df_alerts["Risk Level"].str.contains("LOW")])
-
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Total Tracked Directives", len(df_alerts))
-m2.metric("Critical Actions (High)", high_count, delta=f"{high_count} Alerts" if high_count > 0 else None, delta_color="inverse")
-m3.metric("Operational Tasks (Medium)", med_count)
-m4.metric("Archived Notices (Low)", low_count)
-
-st.write("---")
+# ... keep the rest of the file completely unindented as well ...
