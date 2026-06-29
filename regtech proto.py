@@ -38,7 +38,7 @@ def get_task_state(key, default=False):
         row = cursor.fetchone()
         conn.close()
         if row is not None:
-            return bool(row[0])
+            return bool(row)
     except Exception:
         pass
     return default
@@ -155,7 +155,7 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    # FIX: Explicit list definition provided to prevent compilation breakdown
+    # Static column spacing matrix rules
     rbi_table = Table(table_data, colWidths=[100, 430])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
@@ -174,7 +174,7 @@ def generate_pdf_report(df, regulator):
     return buffer
 
 # =====================================================================
-# FIXED ENGINE: OUTBOUND SMTP TRANSMISSION WITH SYNTAX REMEDIATION
+# FIXED ENGINE: OUTBOUND SMTP TRANSMISSION WITH CLEAN INDENTATION
 # =====================================================================
 def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
     """Packages and transmits an encrypted corporate email with an immutable PDF ledger attached."""
@@ -204,7 +204,6 @@ System Verification Hash Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'
         attachment.add_header('Content-Disposition', 'attachment', filename=f"RegSecure_Ledger_{datetime.now().strftime('%Y%m%d')}.pdf")
         msg.attach(attachment)
         
-        # FIX: Complete block context logic explicitly handled with error routing parameters
         server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()  
         server.login(sender_username, sender_password)
