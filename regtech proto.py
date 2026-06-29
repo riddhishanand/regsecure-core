@@ -1,10 +1,7 @@
 import io
 import sqlite3
 import smtplib  
-import socket  
-from email.mime.multipart import MIMEMultipart  
-from email.mime.text import MIMEText  
-from email.mime.application import MIMEApplication  
+import urllib.request  # Added for strict text payload download handling
 import pandas as pd
 import feedparser
 import streamlit as st
@@ -76,22 +73,24 @@ def fetch_regulatory_directives(regulator):
     }
     reg_key = "RBI" if "RBI" in regulator else ("SEBI" if "SEBI" in regulator else "PFRDA")
     feed_url = rss_feed_mapping[reg_key]
-    original_timeout = socket.getdefaulttimeout()
-    socket.setdefaulttimeout(2.0)
+    
+    # Force a rigid 1.5-second download threshold on the text string extraction layer
     try:
-        feed = feedparser.parse(feed_url)
-        if feed.entries:
-            for entry in feed.entries[:4]:
-                summary_text = entry.get("summary", entry.get("description", "No brief overview available."))
-                directives.append({
-                    "title": entry.get("title", "Untitled Alert"),
-                    "summary": summary_text[:120] + "...",
-                    "link": entry.get("link", "https://rbi.org.in")
-                })
+        req = urllib.request.Request(feed_url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=1.5) as response:
+            xml_data = response.read()
+            feed = feedparser.parse(xml_data)
+            if feed.entries:
+                for entry in feed.entries[:4]:
+                    summary_text = entry.get("summary", entry.get("description", "No brief overview available."))
+                    directives.append({
+                        "title": entry.get("title", "Untitled Alert"),
+                        "summary": summary_text[:120] + "...",
+                        "link": entry.get("link", "https://rbi.org.in")
+                    })
     except Exception:
         pass
-    finally:
-        socket.setdefaulttimeout(original_timeout)
+        
     if not directives:
         if reg_key == "RBI":
             directives = [
@@ -108,6 +107,7 @@ def fetch_regulatory_directives(regulator):
             directives = [
                 {"title": "PFRDA National Pension System (NPS) Digital Exit Protocols", "summary": "Streamlining computational verification framework via facial recognition APIs.", "link": "https://pfrda.org.in"}
             ]
+            
     processed_records = []
     for item in directives:
         risk, action = assign_risk_and_action(item["title"], regulator)
@@ -198,5 +198,3 @@ selected_agency = st.selectbox(
 combined_df = fetch_regulatory_directives(selected_agency)
 
 search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", key="global_search_input")
-
-# ✅ FIX PERMANENTLY: Single flat statement bypasses indentation requirement completely
