@@ -169,37 +169,46 @@ df_alerts = pd.DataFrame(processed_alerts)
 left_panel, right_panel = st.columns([1, 2.2], gap="large")
 
 with left_panel:
+    # --- SUBSCRIPTION SETTING MANAGER ---
+    # Switch this text token string to "premium" once a user makes a payment!
+    user_tier_status = "free"  
+
     st.markdown("### 📥 Report Execution Desk")
-    if not df_alerts.empty:
-        pdf_report_buffer = generate_pdf_report(df_alerts, reg_short_key)
-        st.download_button(
-            label="Generate Executive PDF Report Ledger",
-            data=pdf_report_buffer,
-            file_name=f"RegSecure_AI_Report_{reg_short_key}.pdf",
-            mime="application/pdf",
-            use_container_width=True
-        )
     
+    if user_tier_status == "premium":
+        if not df_alerts.empty:
+            pdf_report_buffer = generate_pdf_report(df_alerts, reg_short_key)
+            st.download_button(
+                label="Generate Executive PDF Report Ledger",
+                data=pdf_report_buffer,
+                file_name=f"RegSecure_AI_Report_{reg_short_key}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+    else:
+        st.error("🔒 Premium Feature Locked")
+        st.info("Executive PDF compilation features require an enterprise tier Pro subscription profile configuration setup.")
+        
+        # Peer-to-peer structural parameters
+        my_upi_id = "riddhishanand10@okaxis"  
+        business_name = "RegSecure AI Platform"
+        subscription_price = "7999"  
+        
+        upi_url = f"upi://pay?pa={my_upi_id}&pn={business_name.replace(' ', '%20')}&am={subscription_price}&cu=INR"
+        qr_code_image_url = f"https://qrserver.com{upi_url}"
+        
+        with st.container(border=True):
+            st.markdown("#### 💳 Scan to Unlock Premium Tier Access")
+            st.image(qr_code_image_url, caption=f"Scan with GPay, PhonePe, or Paytm to route ₹{subscription_price}", width=200)
+            st.markdown(f"**Direct UPI ID:** `{my_upi_id}`")
+            st.warning("📩 Following payment transfer compilation, route your confirmation snapshot ledger directly to riddhishanand10@gmail.com for database activation routing.")
+
     st.markdown("---")
     st.markdown("### ✉️ Security Distribution Engine")
     recipient_address = st.text_input("Executive Desk Delivery Address", value="riddhishanand10@gmail.com")
     
-    if st.button("Transmit Immutable Audit Records", use_container_width=True):
-        st.success(f"Success! Immutable PDF report ledger safely routed to {recipient_address}.")
-
-with right_panel:
-    st.markdown("### 📋 Regulatory Intelligence Directives")
-    for idx, row in df_alerts.iterrows():
-        task_uid = f"task_audit_{username}_{reg_short_key}_{idx}"
-        is_checked = get_task_state(task_uid, default=False)
-        
-        with st.expander(f"{row['Risk Level']} | {row['Title']}", expanded=(idx == 0)):
-            st.markdown(f"**Brief Summary:** {row['Summary']}")
-            with st.container(border=True):
-                st.markdown(f"**Deployment Rule:** {row['Recommended Action']}")
-            st.markdown(f"🔗 [Review Original Source Link]({row['Link']})")
-            
-            checked_state = st.checkbox("Sign-off task as fully deployed", value=is_checked, key=f"cb_{task_uid}")
-            if checked_state != is_checked:
-                save_task_state(task_uid, checked_state)
-                st.rerun()
+    if user_tier_status == "premium":
+        if st.button("Transmit Immutable Audit Records", use_container_width=True):
+            st.success(f"Success! Immutable PDF report ledger safely routed to {recipient_address}.")
+    else:
+        st.button("Transmit Immutable Audit Records", use_container_width=True, disabled=True, help="Upgrade to unlock automated corporate email routing chains.")
