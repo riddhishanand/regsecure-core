@@ -167,60 +167,29 @@ for entry in data_pool:
 
 df_alerts = pd.DataFrame(processed_alerts)
 left_panel, right_panel = st.columns([1, 2.2], gap="large")
-
-with left_panel:
-    # --- SUBSCRIPTION SETTING MANAGER ---
-    # Switch this text token string to "premium" once a user makes a payment!
-    user_tier_status = "free"  
-
-    st.markdown("### 📥 Report Execution Desk")
-    
-    if user_tier_status == "premium":
-        if not df_alerts.empty:
-            pdf_report_buffer = generate_pdf_report(df_alerts, reg_short_key)
-            st.download_button(
-                label="Generate Executive PDF Report Ledger",
-                data=pdf_report_buffer,
-                file_name=f"RegSecure_AI_Report_{reg_short_key}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-    else:
-        st.error("🔒 Premium Feature Locked")
-        st.info("Executive PDF compilation features require an enterprise tier Pro subscription profile configuration setup.")
-        
-        # Peer-to-peer structural parameters
-        my_upi_id = "riddhishanand10@okaxis"  
-        business_name = "RegSecure AI Platform"
-        subscription_price = "7999"  
-        upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
-        qr_code_image_url = f"https://googleapis.com{urllib.parse.quote(upi_url)}"
-        
-        with st.container(border=True):
 # --- FLAT UPI INTENT DESK ---
-        st.markdown("#### 💳 Open UPI Payment Portal")
-        
-        upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
-        
-        st.markdown(
-            f'<a href="{upi_url}" target="_blank">'
-            f'<button style="width:100%; background-color:#FF4B4B; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:16px;">'
-            f'🚀 Click to Open in GPay / Paytm / PhonePe'
-            f'</button></a>', 
-            unsafe_allowed_html=True
-        )
-        
-        st.markdown(f"**Direct UPI ID:** `{my_upi_id}`")
-        st.markdown(f"**Target Due:** `₹{subscription_price}`")
-        st.warning("📩 Following payment transfer compilation, route your confirmation snapshot ledger directly to riddhishanand10@gmail.com for database activation routing.")
-            st.markdown(f"**Target Due:** `₹{subscription_price}`")
-            st.warning("📩 Following payment transfer compilation, route your confirmation snapshot ledger directly to riddhishanand10@gmail.com for database activation routing.")
-    st.markdown("---")
-    st.markdown("### ✉️ Security Distribution Engine")
-    recipient_address = st.text_input("Executive Desk Delivery Address", value="riddhishanand10@gmail.com")
+    st.markdown("#### 💳 Open UPI Payment Portal")
     
-    if user_tier_status == "premium":
-        if st.button("Transmit Immutable Audit Records", use_container_width=True):
-            st.success(f"Success! Immutable PDF report ledger safely routed to {recipient_address}.")
-    else:
-        st.button("Transmit Immutable Audit Records", use_container_width=True, disabled=True, help="Upgrade to unlock automated corporate email routing chains.")
+    upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
+    
+    st.markdown(
+        f'<a href="{upi_url}" target="_blank">'
+        f'<button style="width:100%; background-color:#FF4B4B; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:16px;">'
+        f'🚀 Click to Open in GPay / Paytm / PhonePe'
+        f'</button></a>', 
+        unsafe_allowed_html=True
+    )
+    
+    st.markdown(f"**Direct UPI ID:** `{my_upi_id}`")
+    st.markdown(f"**Target Due:** `₹{subscription_price}`")
+    st.warning("📩 Following payment transfer compilation, route your confirmation snapshot ledger directly to riddhishanand10@gmail.com for database activation routing.")
+
+st.markdown("---")
+st.markdown("### ✉️ Security Distribution Engine")
+recipient_address = st.text_input("Executive Desk Delivery Address", value="riddhishanand10@gmail.com")
+
+if user_tier_status == "premium":
+    if st.button("Transmit Immutable Audit Records", use_container_width=True):
+        st.success(f"Success! Immutable PDF report ledger safely routed to {recipient_address}.")
+else:
+    st.button("Transmit Immutable Audit Records", use_container_width=True, disabled=True, help="Upgrade to unlock automated corporate email routing chains.")
