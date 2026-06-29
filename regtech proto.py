@@ -105,16 +105,20 @@ authenticator = stauth.Authenticate(
 
 st.set_page_config(page_title="RegSecure AI Dashboard", page_icon="🛡️", layout="wide")
 
-# --- Step C: Render Login Widget ---
-name, authentication_status, username = authenticator.login('main')
+# --- Step C: Render Login Widget with Correct Parameters ---
+authenticator.login()
 
-if authentication_status == False:
+# Manage application flow based on authentication state
+if st.session_state.get("authentication_status") == False:
     st.error('Authentication Error: Invalid username or security credentials.')
     st.stop()
-
-if authentication_status == None:
+elif st.session_state.get("authentication_status") == None:
     st.warning('Please enter your authorized corporate enterprise credentials.')
     st.stop()
+
+# Get secure verified metadata tokens
+name = st.session_state["name"]
+username = st.session_state["username"]
 
 # -------------------------------------------------------------
 # SECURE ENTERPRISE ZONE (Completely flat code path level)
@@ -135,7 +139,7 @@ with st.sidebar:
     reg_key = st.selectbox("Switch Active Intelligence Feed:", ["Reserve Bank of India (RBI)", "SEBI", "PFRDA"])
     reg_short_key = "RBI" if "rbi" in reg_key.lower() else ("SEBI" if "sebi" in reg_key.lower() else "PFRDA")
     st.markdown("---")
-    authenticator.logout('Sign Out of Secure Portal', 'main')
+    authenticator.logout('Sign Out of Secure Portal', 'sidebar')
 
 if "active_matrix" not in st.session_state or st.session_state.get("current_agency") != reg_short_key:
     st.session_state["active_matrix"] = generate_local_fallback(reg_short_key)
