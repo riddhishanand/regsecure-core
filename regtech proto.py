@@ -193,9 +193,8 @@ with left_panel:
         my_upi_id = "riddhishanand10@okaxis"  
         business_name = "RegSecure AI Platform"
         subscription_price = "7999"  
-        
-        upi_url = f"upi://pay?pa={my_upi_id}&pn={business_name.replace(' ', '%20')}&am={subscription_price}&cu=INR"
-        qr_code_image_url = f"https://quickchart.io{urllib.parse.quote(upi_url)}&size=200"
+        upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
+        qr_code_image_url = f"https://googleapis.com{urllib.parse.quote(upi_url)}"
         
         with st.container(border=True):
             st.markdown("#### 💳 Scan to Unlock Premium Tier Access")
