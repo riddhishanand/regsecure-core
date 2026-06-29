@@ -13,9 +13,6 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
-# =====================================================================
-# DATABASE STORAGE LAYER
-# =====================================================================
 DB_FILE = "regsecure.db"
 
 def init_db():
@@ -59,13 +56,9 @@ def save_task_state(key, val):
 
 init_db()
 
-# =====================================================================
-# INTELLIGENCE PARSING LOGIC ENGINE
-# =====================================================================
 def assign_risk_and_action(title, regulator):
     title_lower = title.lower()
     reg_short = "RBI" if "rbi" in regulator.lower() else ("SEBI" if "sebi" in regulator.lower() else "PFRDA")
-    
     if any(k in title_lower for k in ["cyber", "security", "atm", "fraud", "vulnerability", "it-risk", "breach"]):
         return "🔴 HIGH", f"[{reg_short} CRITICAL] Enforce immediate technical audits, deploy mandatory MFA protocols, and submit status report to security officers within 15 days."
     elif any(k in title_lower for k in ["kyc", "customer", "aml", "disclosure", "insider", "audit", "master direction"]):
@@ -80,10 +73,8 @@ def fetch_regulatory_directives(regulator):
         "SEBI": "https://sebi.gov.in",
         "PFRDA": "https://pfrda.org.in"
     }
-    
     reg_key = "RBI" if "RBI" in regulator else ("SEBI" if "SEBI" in regulator else "PFRDA")
     feed_url = rss_feed_mapping[reg_key]
-    
     try:
         feed = feedparser.parse(feed_url)
         if feed.entries:
@@ -96,7 +87,6 @@ def fetch_regulatory_directives(regulator):
                 })
     except Exception:
         pass
-
     if not directives:
         if reg_key == "RBI":
             directives = [
@@ -113,7 +103,6 @@ def fetch_regulatory_directives(regulator):
             directives = [
                 {"title": "PFRDA National Pension System (NPS) Digital Exit Protocols", "summary": "Streamlining computational verification framework via facial recognition APIs.", "link": "https://pfrda.org.in"}
             ]
-            
     processed_records = []
     for item in directives:
         risk, action = assign_risk_and_action(item["title"], regulator)
@@ -126,26 +115,19 @@ def fetch_regulatory_directives(regulator):
             "Link": item["link"],
             "Published": datetime.now().strftime("%Y-%m-%d")
         })
-        
     return pd.DataFrame(processed_records)
 
-# =====================================================================
-# PDF IMMUTABLE LEDGER COMPILING ENGINE
-# =====================================================================
 def generate_pdf_report(df, regulator):
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
     story = []
-    
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontSize=20, textColor=colors.HexColor("#1A365D"), spaceAfter=10)
     sub_style = ParagraphStyle('DocSub', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor("#4A5568"), spaceAfter=20)
     body_style = ParagraphStyle('TableBody', parent=styles['Normal'], fontSize=8, leading=11)
-    
     story.append(Paragraph("RegSecure AI Executive Compliance Report", title_style))
     story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Target Agency: {regulator}", sub_style))
     story.append(Spacer(1, 10))
-    
     table_data = [["Risk Priority", "Regulatory Alert Directive Details"]]
     for _, row in df.iterrows():
         clean_risk = row['Risk Level'].replace("🔴 ", "").replace("🟡 ", "").replace("🟢 ", "")
@@ -154,12 +136,9 @@ def generate_pdf_report(df, regulator):
             Paragraph(f"<b>{clean_risk}</b>", body_style),
             Paragraph(content_text, body_style)
         ])
-    
-    # ✅ FIX PERMANENTLY: Storing sizing inside individual clear numbers ensures text protection
     col_1_width = 100
     col_2_width = 430
     pdf_column_widths = [col_1_width, col_2_width]
-    
     rbi_table = Table(table_data, colWidths=pdf_column_widths)
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
@@ -171,36 +150,27 @@ def generate_pdf_report(df, regulator):
         ('TOPPADDING', (0,1), (-1,-1), 8),
         ('BOTTOMPADDING', (0,1), (-1,-1), 8),
     ]))
-    
     story.append(rbi_table)
     doc.build(story)
     buffer.seek(0)
     return buffer
 
-# =====================================================================
-# SECURE OUTBOUND SMTP TRANSMISSION ROUTING LAYER
-# =====================================================================
 def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
-    """Packages and transmits an encrypted corporate email with an immutable PDF ledger attached."""
     try:
         smtp_server = st.secrets["email"]["smtp_server"]
         smtp_port = int(st.secrets["email"]["smtp_port"])
         sender_username = st.secrets["email"]["sender_username"]
         sender_password = st.secrets["email"]["sender_password"]
-        
         msg = MIMEMultipart()
         msg['Subject'] = f"🛡️ [RegSecure AI Audit Alert] - Compliance Update Matrix: {agency_name}"
         msg['From'] = sender_username
         msg['To'] = recipient_email
-        
         email_body = f"Greetings Risk Management Desk,\n\nThe RegSecure AI automated threat engine has parsed new system compliance records for {agency_name}.\n\nPlease review the attached immutable, executive-ready PDF audit log ledger instantly to confirm required system updates.\n\nSystem Verification Hash Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         msg.attach(MIMEText(email_body, 'plain'))
-        
         pdf_buffer.seek(0)
         attachment = MIMEApplication(pdf_buffer.read(), _subtype="pdf")
         attachment.add_header('Content-Disposition', 'attachment', filename=f"RegSecure_Ledger_{datetime.now().strftime('%Y%m%d')}.pdf")
         msg.attach(attachment)
-        
         server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()  
         server.login(sender_username, sender_password)
@@ -208,3 +178,28 @@ def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
         server.quit()
         return True, "Email successfully encrypted and transmitted down active relay loops."
     except Exception as e:
+        return False, str(e)
+
+st.set_page_config(page_title="RegSecure AI Dashboard", layout="wide")
+
+st.title("🛡️ RegSecure AI Enterprise Platform")
+st.markdown("### Multi-Regulatory Compliance Matrix & Autonomous Response Center")
+
+selected_agency = st.selectbox(
+    "Switch Active Regulatory Intelligence Feed:", 
+    ["Reserve Bank of India (RBI)", "Securities & Exchange Board (SEBI)", "Pension Fund Authority (PFRDA)"]
+)
+
+combined_df = fetch_regulatory_directives(selected_agency)
+
+search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", key="global_search_input")
+if search_query:
+    combined_df = combined_df[
+        combined_df['Title'].str.contains(search_query, case=False, na=False) |
+        combined_df['Summary'].str.contains(search_query, case=False, na=False)
+    ]
+
+st.markdown("---")
+st.subheader("📊 Risk Profile Analytics")
+
+total_directives = len(combined_df)
