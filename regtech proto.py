@@ -157,39 +157,73 @@ data_pool = st.session_state["active_matrix"]
 processed_alerts = []
 for entry in data_pool:
     risk, action = assign_risk_and_action(entry["title"], reg_short_key)
-    processed_alerts.append({
-        "Title": entry["title"],
-        "Summary": entry["summary"],
-        "Link": entry["link"],
-        "Risk Level": risk,
-        "Recommended Action": action
-    })
-
-df_alerts = pd.DataFrame(processed_alerts)
+   # --- Layout Grid Workspace Matrix Construction ---
 left_panel, right_panel = st.columns([1, 2.2], gap="large")
-# --- FLAT UPI INTENT DESK ---
-    st.markdown("#### 💳 Open UPI Payment Portal")
-    
-    upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
-    
-    st.markdown(
-        f'<a href="{upi_url}" target="_blank">'
-        f'<button style="width:100%; background-color:#FF4B4B; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:16px;">'
-        f'🚀 Click to Open in GPay / Paytm / PhonePe'
-        f'</button></a>', 
-        unsafe_allowed_html=True
-    )
-    
-    st.markdown(f"**Direct UPI ID:** `{my_upi_id}`")
-    st.markdown(f"**Target Due:** `₹{subscription_price}`")
-    st.warning("📩 Following payment transfer compilation, route your confirmation snapshot ledger directly to riddhishanand10@gmail.com for database activation routing.")
 
-st.markdown("---")
-st.markdown("### ✉️ Security Distribution Engine")
-recipient_address = st.text_input("Executive Desk Delivery Address", value="riddhishanand10@gmail.com")
+with left_panel:
+    # --- SUBSCRIPTION SETTING MANAGER ---
+    # Switch this text token string to "premium" once a user makes a payment!
+    user_tier_status = "free"  
 
-if user_tier_status == "premium":
-    if st.button("Transmit Immutable Audit Records", use_container_width=True):
-        st.success(f"Success! Immutable PDF report ledger safely routed to {recipient_address}.")
-else:
-    st.button("Transmit Immutable Audit Records", use_container_width=True, disabled=True, help="Upgrade to unlock automated corporate email routing chains.")
+    st.markdown("### 📥 Report Execution Desk")
+    
+    if user_tier_status == "premium":
+        if not df_alerts.empty:
+            pdf_report_buffer = generate_pdf_report(df_alerts, reg_short_key)
+            st.download_button(
+                label="Generate Executive PDF Report Ledger",
+                data=pdf_report_buffer,
+                file_name=f"RegSecure_AI_Report_{reg_short_key}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+    else:
+        st.error("🔒 Premium Feature Locked")
+        st.info("Executive PDF compilation features require an enterprise tier Pro subscription profile configuration setup.")
+        
+        # Peer-to-peer payment structural variables
+        my_upi_id = "riddhishanand10@okaxis"  
+        business_name = "RegSecure AI Platform"
+        subscription_price = "7999"  
+        
+        st.markdown("#### 💳 Open UPI Payment Portal")
+        upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
+        
+        st.markdown(
+            f'<a href="{upi_url}" target="_blank">'
+            f'<button style="width:100%; background-color:#FF4B4B; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:16px;">'
+            f'🚀 Click to Open in GPay / Paytm / PhonePe'
+            f'</button></a>', 
+            unsafe_allowed_html=True
+        )
+        
+        st.markdown(f"**Direct UPI ID:** `{my_upi_id}`")
+        st.markdown(f"**Target Due:** `₹{subscription_price}`")
+        st.warning("📩 Following payment transfer compilation, route your confirmation snapshot ledger directly to riddhishanand10@gmail.com for database activation routing.")
+
+    st.markdown("---")
+    st.markdown("### ✉️ Security Distribution Engine")
+    recipient_address = st.text_input("Executive Desk Delivery Address", value="riddhishanand10@gmail.com")
+    
+    if user_tier_status == "premium":
+        if st.button("Transmit Immutable Audit Records", use_container_width=True):
+            st.success(f"Success! Immutable PDF report ledger safely routed to {recipient_address}.")
+    else:
+        st.button("Transmit Immutable Audit Records", use_container_width=True, disabled=True, help="Upgrade to unlock automated corporate email routing chains.")
+
+with right_panel:
+    st.markdown("### 📋 Regulatory Intelligence Directives")
+    for idx, row in df_alerts.iterrows():
+        task_uid = f"task_audit_{username}_{reg_short_key}_{idx}"
+        is_checked = get_task_state(task_uid, default=False)
+        
+        with st.expander(f"{row['Risk Level']} | {row['Title']}", expanded=(idx == 0)):
+            st.markdown(f"**Brief Summary:** {row['Summary']}")
+            with st.container(border=True):
+                st.markdown(f"**Deployment Rule:** {row['Recommended Action']}")
+            st.markdown(f"🔗 [Review Original Source Link]({row['Link']})")
+            
+            checked_state = st.checkbox("Sign-off task as fully deployed", value=is_checked, key=f"cb_{task_uid}")
+            if checked_state != is_checked:
+                save_task_state(task_uid, checked_state)
+                st.rerun()
