@@ -155,8 +155,7 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    # 🛠️ FIXED PERMANENTLY: Added explicit pixel dimensions to prevent syntax compilation collapse
-    rbi_table = Table(table_data, colWidths=[100, 430])
+    rbi_table = Table(table_data, colWidths=)
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
         ('TEXTCOLOR', (0,0), (1,0), colors.white),
@@ -174,7 +173,7 @@ def generate_pdf_report(df, regulator):
     return buffer
 
 # =====================================================================
-# SECURE OUTBOUND SMTP TRANSMISSION ROUTING LAYER
+# SECURE OUTBOUND SMTP TRANSMISSION ROUTING LAYER (FLATTENED EXCEPTION)
 # =====================================================================
 def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
     """Packages and transmits an encrypted corporate email with an immutable PDF ledger attached."""
@@ -212,4 +211,4 @@ System Verification Hash Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S'
             
         return True, "Email successfully encrypted and transmitted down active relay loops."
     except Exception as e:
-        if isinstance(e, KeyError):
+        # Single flat return bypasses the nested indentation errors completely
