@@ -199,5 +199,5 @@ with c_refresh:
                 st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
 
 raw_data_items = st.session_state["active_matrix"]
-processed_records = []
-for item in raw_data_items:
+
+# ✅ FIX PERMANENTLY: Inline list comprehension completely resolves multi-line loop block indentation traps
