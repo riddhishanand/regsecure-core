@@ -153,7 +153,8 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    rbi_table = Table(table_data, colWidths=[100, 420])
+    # Explicit column widths to ensure correct layout scaling inside ReportLab
+    rbi_table = Table(table_data, colWidths=[100, 430])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
         ('TEXTCOLOR', (0,0), (1,0), colors.white),
@@ -209,4 +210,3 @@ with st.spinner(f"Extracting intelligence maps from {selected_regulator}..."):
 
 # =====================================================================
 # 4. DATA VISUALIZATION ENGINE (Analytical Distribution Charts)
-# =====================================================================
