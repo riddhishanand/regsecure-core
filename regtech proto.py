@@ -140,20 +140,15 @@ with st.sidebar:
     reg_short_key = "RBI" if "rbi" in reg_key.lower() else ("SEBI" if "sebi" in reg_key.lower() else "PFRDA")
     st.markdown("---")
     authenticator.logout('Sign Out of Secure Portal', 'sidebar')
-
-if "active_matrix" not in st.session_state or st.session_state.get("current_agency") != reg_short_key:
-st.markdown("---")
-    # Secret administrative drop-down panel wrapper
+    st.markdown("---")
+    
     with st.expander("⚙️ Admin Portal (Hidden Grid)"):
         admin_passkey = st.text_input("Master Override Passkey", type="password", key="admin_master_passkey_ti")
-        
-        # Protect the toggle with a secret password only you know
         if admin_passkey == "riddhish2026":
             st.success("Authorized Access Node")
-            # Force the subscription override token straight into session storage
             st.session_state["forced_premium_override"] = st.toggle("Activate Premium Tier", value=False)
-        else:
-            if admin_passkey:
+        elif admin_passkey:
+            st.error("Invalid Override Token Configuration")
                 st.error("Invalid Override Token Configuration")
 
 data_pool = st.session_state["active_matrix"]
