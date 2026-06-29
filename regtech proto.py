@@ -145,7 +145,7 @@ selected_regulator = st.selectbox(
 with st.spinner(f"Extracting intelligence maps from {selected_regulator}..."):
     df_directives = fetch_regulatory_directives(selected_regulator, REG_FEEDS[selected_regulator])
 
-col_a, col_b = st.columns()
+col_a, col_b = st.columns(2)
 with col_a:
     search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", "")
 with col_b:
@@ -180,7 +180,7 @@ for index, row in filtered_df.iterrows():
     risk_color = "red" if "🔴" in row["Risk Level"] else ("orange" if "🟡" in row["Risk Level"] else "green")
     
     with st.expander(f"💼 Task Protocol: {row['Title']} ({row['Risk Level']})"):
-        c1, c2 = st.columns()
+        c1, c2 = st.columns(2)
         with c1:
             st.markdown(f"**Regulatory Source:** {row['Source']}")
             st.markdown(f"**Risk Severity:** :{risk_color}[{row['Risk Level']}]")
