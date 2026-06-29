@@ -153,7 +153,7 @@ def generate_pdf_report(df, regulator):
             Paragraph(content_text, body_style)
         ])
     
-    rbi_table = Table(table_data, colWidths=[100, 420])
+    rbi_table = Table(table_data, colWidths=[100, 430])
     rbi_table.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
         ('TEXTCOLOR', (0,0), (1,0), colors.white),
@@ -180,7 +180,7 @@ if "authenticated" not in st.session_state:
 
 if not st.session_state["authenticated"]:
     st.markdown("<div style='padding-top:50px;'></div>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns(3)
     with col2:
         st.info("### 🔐 RegSecure AI Portal Sign-In")
         username = st.text_input("Username:", value="admin")
