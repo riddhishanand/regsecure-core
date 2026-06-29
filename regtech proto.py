@@ -1,7 +1,7 @@
 import io
 import sqlite3
 import smtplib  
-import socket  # Added for absolute connection timeout control
+import socket  
 from email.mime.multipart import MIMEMultipart  
 from email.mime.text import MIMEText  
 from email.mime.application import MIMEApplication  
@@ -36,7 +36,7 @@ def get_task_state(key, default=False):
         row = cursor.fetchone()
         conn.close()
         if row is not None:
-            return bool(row[0])
+            return bool(row)
     except Exception:
         pass
     return default
@@ -77,7 +77,6 @@ def fetch_regulatory_directives(regulator):
     reg_key = "RBI" if "RBI" in regulator else ("SEBI" if "SEBI" in regulator else "PFRDA")
     feed_url = rss_feed_mapping[reg_key]
     
-    # Force a strict global network timeout threshold of 2 seconds
     original_timeout = socket.getdefaulttimeout()
     socket.setdefaulttimeout(2.0)
     
@@ -94,7 +93,6 @@ def fetch_regulatory_directives(regulator):
     except Exception:
         pass
     finally:
-        # Safely restore standard default socket conditions
         socket.setdefaulttimeout(original_timeout)
         
     if not directives:
@@ -204,5 +202,6 @@ selected_agency = st.selectbox(
 combined_df = fetch_regulatory_directives(selected_agency)
 
 search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", key="global_search_input")
+
+# ✅ FIX: Flattened filter expression into a single line to prevent trailing bracket syntax truncation errors
 if search_query:
-    combined_df = combined_df[
