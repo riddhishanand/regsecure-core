@@ -65,7 +65,6 @@ def assign_risk_and_action(title, regulator):
         return "🟢 LOW", f"[{reg_short} NOTICE] Record this regulatory change in quarterly compliance registers and archive files safely for legal tracking."
 
 def generate_local_fallback(reg_key):
-    """Provides instantaneous, server-isolated data templates to avoid connection timeouts."""
     if reg_key == "RBI":
         return [
             {"title": "Master Direction - Cyber Security Controls for Third-Party ATM Apps", "summary": "Guidelines detailing MFA requirements for switches.", "link": "https://rbi.org.in"},
@@ -82,7 +81,6 @@ def generate_local_fallback(reg_key):
     ]
 
 def pull_live_rss(feed_url):
-    """Isolates network requests to standalone user triggers with strict connection safety limits."""
     directives = []
     try:
         req = urllib.request.Request(feed_url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -184,16 +182,23 @@ rss_feed_mapping = {
     "PFRDA": "https://pfrda.org.in"
 }
 
-# Maintain persistent operational states using Session State mapping layers
 if "active_matrix" not in st.session_state or st.session_state.get("current_agency") != reg_key:
     st.session_state["active_matrix"] = generate_local_fallback(reg_key)
     st.session_state["current_agency"] = reg_key
 
-# ✅ UPGRADE: Client-Side Triggered Outbound Connection Component
-c_refresh, c_status = st.columns([1, 4])
+c_refresh, c_status = st.columns(2)
 with c_refresh:
     if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
         with st.spinner("Quoting remote schema logs..."):
             live_items = pull_live_rss(rss_feed_mapping[reg_key])
             if live_items:
                 st.session_state["active_matrix"] = live_items
+                st.toast("Live RSS Sync Successful!", icon="⚡")
+                st.rerun()
+            else:
+                st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
+
+raw_data_items = st.session_state["active_matrix"]
+processed_records = []
+for item in raw_data_items:
+    risk, action = assign_risk_and_action(item["title"], reg_key)
