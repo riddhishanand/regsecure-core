@@ -1,5 +1,4 @@
 import io
-import sqlite3
 import smtplib  
 import urllib.request  
 import pandas as pd
@@ -18,48 +17,15 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
-DB_FILE = "regsecure.db"
-
-def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS task_states (
-            task_key TEXT PRIMARY KEY,
-            is_checked INTEGER
-        )
-    ''')
-    conn.commit()
-    conn.close()
+# --- Database-free state managers ---
+if "task_database" not in st.session_state:
+    st.session_state["task_database"] = {}
 
 def get_task_state(key, default=False):
-    try:
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        cursor.execute("SELECT is_checked FROM task_states WHERE task_key = ?", (key,))
-        row = cursor.fetchone()
-        conn.close()
-        if row is not None:
-            return bool(row[0])
-    except Exception:
-        pass
-    return default
+    return st.session_state["task_database"].get(key, default)
 
 def save_task_state(key, val):
-    try:
-        conn = sqlite3.connect(DB_FILE)
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO task_states (task_key, is_checked)
-            VALUES (?, ?)
-            ON CONFLICT(task_key) DO UPDATE SET is_checked = excluded.is_checked
-        ''', (key, int(val)))
-        conn.commit()
-        conn.close()
-    except Exception:
-        pass
-
-init_db()
+    st.session_state["task_database"][key] = val
 
 def assign_risk_and_action(title, regulator):
     title_lower = title.lower()
@@ -157,11 +123,7 @@ def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
         email_body = f"Greetings Risk Management Desk,\n\nThe RegSecure AI automated threat engine has parsed new system compliance records for {agency_name}.\n\nPlease review the attached immutable, executive-ready PDF audit log ledger instantly to confirm required system updates.\n\nSystem Verification Hash Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
         msg.attach(MIMEText(email_body, 'plain'))
         pdf_buffer.seek(0)
-        # Change this line:
-c_refresh, c_status = st.columns()
-
-# To this:
-c_refresh, c_status = st.columns(2)
+        attachment = MIMEApplication(pdf_buffer.read(), _subtype="pdf")
         attachment.add_header('Content-Disposition', 'attachment', filename=f"RegSecure_Ledger_{datetime.now().strftime('%Y%m%d')}.pdf")
         msg.attach(attachment)
         server = smtplib.SMTP(smtp_server, smtp_port)
@@ -173,29 +135,25 @@ c_refresh, c_status = st.columns(2)
     except Exception as e:
         return False, str(e)
 
-# --- Streamlit Dashboard UI Setup ---
+# --- Streamlit UI Render Matrix Section ---
 st.set_page_config(page_title="RegSecure AI Dashboard", page_icon="🛡️", layout="wide")
 st.title("🛡️ RegSecure AI Enterprise Platform")
 st.markdown("### Multi-Regulatory Compliance Matrix & Autonomous Response Center")
 
-# RSS feed configuration mappings
 rss_feed_mapping = {
     "RBI": "https://rbi.org.in",
     "SEBI": "https://sebi.gov.in",
     "PFRDA": "https://pfrda.org.in"
 }
 
-# Regulator Selection Input component
 reg_key = st.selectbox("Switch Active Regulatory Intelligence Feed:", ["Reserve Bank of India (RBI)", "SEBI", "PFRDA"])
 reg_short_key = "RBI" if "rbi" in reg_key.lower() else ("SEBI" if "sebi" in reg_key.lower() else "PFRDA")
 
-# Manage Application Session Data States
 if "active_matrix" not in st.session_state or st.session_state.get("current_agency") != reg_short_key:
     st.session_state["active_matrix"] = generate_local_fallback(reg_short_key)
     st.session_state["current_agency"] = reg_short_key
 
-# Interactive sync engine button action
-c_refresh, c_status = st.columns([1, 3])
+c_refresh, c_status = st.columns(2)
 with c_refresh:
     if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
         with st.spinner("Quoting remote schema logs..."):
@@ -207,4 +165,28 @@ with c_refresh:
             else:
                 st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
 
-# Process raw state data pool array
+data_pool = st.session_state["active_matrix"]
+processed_alerts = []
+for entry in data_pool:
+    risk, action = assign_risk_and_action(entry["title"], reg_short_key)
+    processed_alerts.append({
+        "Title": entry["title"],
+        "Summary": entry["summary"],
+        "Link": entry["link"],
+        "Risk Level": risk,
+        "Recommended Action": action
+    })
+
+df_alerts = pd.DataFrame(processed_alerts)
+
+high_count = len(df_alerts[df_alerts["Risk Level"].str.contains("HIGH")])
+med_count = len(df_alerts[df_alerts["Risk Level"].str.contains("MEDIUM")])
+low_count = len(df_alerts[df_alerts["Risk Level"].str.contains("LOW")])
+
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("Total Tracked Directives", len(df_alerts))
+m2.metric("Critical Actions (High)", high_count, delta=f"{high_count} Alerts" if high_count > 0 else None, delta_color="inverse")
+m3.metric("Operational Tasks (Medium)", med_count)
+m4.metric("Archived Notices (Low)", low_count)
+
+st.write("---")
