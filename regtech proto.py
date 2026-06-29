@@ -1,5 +1,9 @@
 import io
 import sqlite3
+import smtplib  # Core production email engine
+from email.mime.multipart import MIMEMultipart  # Structured body assembly
+from email.mime.text import MIMEText  # Text rendering
+from email.mime.application import MIMEApplication  # Attachment packing logic
 import pandas as pd
 import feedparser
 import streamlit as st
@@ -34,7 +38,7 @@ def get_task_state(key, default=False):
         row = cursor.fetchone()
         conn.close()
         if row is not None:
-            return bool(row[0])
+            return bool(row)
     except Exception:
         pass
     return default
@@ -126,84 +130,81 @@ def fetch_regulatory_directives(regulator):
     return pd.DataFrame(processed_records)
 
 # =====================================================================
-# MAIN USER INTERFACE HOOK
+# PDF IMMUTABLE LEDGER COMPILING ENGINE
 # =====================================================================
-st.set_page_config(page_title="RegSecure AI Dashboard", layout="wide")
-
-st.title("🛡️ RegSecure AI Enterprise Platform")
-st.markdown("### Multi-Regulatory Compliance Matrix & Autonomous Response Center")
-
-# Filter Navigation control unit
-selected_agency = st.selectbox(
-    "Switch Active Regulatory Intelligence Feed:", 
-    ["Reserve Bank of India (RBI)", "Securities & Exchange Board (SEBI)", "Pension Fund Authority (PFRDA)"]
-)
-
-# Pull data tables securely
-combined_df = fetch_regulatory_directives(selected_agency)
-
-# 🛠️ INSTANT FIX: Text keyword search data processing filter implementation
-search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", key="global_search_input")
-if search_query:
-    combined_df = combined_df[
-        combined_df['Title'].str.contains(search_query, case=False, na=False) |
-        combined_df['Summary'].str.contains(search_query, case=False, na=False)
-    ]
-
-st.markdown("---")
-st.subheader("📊 Risk Profile Analytics")
-
-# Structural logic processing block calculations
-total_directives = len(combined_df)
-high_risk_count = len(combined_df[combined_df["Risk Level"].str.contains("HIGH")]) if total_directives > 0 else 0
-med_risk_count = len(combined_df[combined_df["Risk Level"].str.contains("MEDIUM")]) if total_directives > 0 else 0
-low_risk_count = len(combined_df[combined_df["Risk Level"].str.contains("LOW")]) if total_directives > 0 else 0
-
-# Split grid window layout explicitly to ensure spacing stability
-col_chart, col_metrics = st.columns([3, 2])
-
-with col_chart:
-    # 🛠️ INSTANT FIX: Static Text mapping to prevent text trimming or canvas bounds collisions
-    chart_df = pd.DataFrame({
-        'Count': [high_risk_count, med_risk_count, low_risk_count],
-        'Priority Level': ['High Risk', 'Medium Risk', 'Low Notice']
-    }).set_index('Priority Level')
-    st.bar_chart(chart_df, color="#1A365D", use_container_width=True)
-
-with col_metrics:
-    # 🛠️ INSTANT FIX: Encapsulated cleanly in dedicated metrics metrics block row layers
-    st.metric(label="Total Logged Items", value=str(total_directives))
-    st.metric(label="High Risk Priority", value=str(high_risk_count))
-    st.metric(label="Medium Risk Priority", value=str(med_risk_count))
+def generate_pdf_report(df, regulator):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+    story = []
     
-    st.markdown("<br/>", unsafe_allow_html=True)
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontSize=20, textColor=colors.HexColor("#1A365D"), spaceAfter=10)
+    sub_style = ParagraphStyle('DocSub', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor("#4A5568"), spaceAfter=20)
+    body_style = ParagraphStyle('TableBody', parent=styles['Normal'], fontSize=8, leading=11)
     
-    # Adaptive status alert engine
-    if high_risk_count >= 2:
-        st.error("🚨 **AI Threat Assessment Level: ELEVATED CRISIS**")
-    elif high_risk_count == 1:
-        st.warning("⚡ **AI Threat Assessment Level: GUARDED / MONITORING**")
-    else:
-        st.success("🌐 **AI Threat Assessment Level: STABLE**")
+    story.append(Paragraph("RegSecure AI Executive Compliance Report", title_style))
+    story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Target Agency: {regulator}", sub_style))
+    story.append(Spacer(1, 10))
+    
+    table_data = [["Risk Priority", "Regulatory Alert Directive Details"]]
+    for _, row in df.iterrows():
+        clean_risk = row['Risk Level'].replace("🔴 ", "").replace("🟡 ", "").replace("🟢 ", "")
+        content_text = f"<b>{row['Title']}</b><br/><i>Summary:</i> {row['Summary']}<br/><b>Required Action:</b> {row['Recommended Action']}"
+        table_data.append([
+            Paragraph(f"<b>{clean_risk}</b>", body_style),
+            Paragraph(content_text, body_style)
+        ])
+    
+    rbi_table = Table(table_data, colWidths=[100, 430])
+    rbi_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
+        ('TEXTCOLOR', (0,0), (1,0), colors.white),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 8),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('TOPPADDING', (0,1), (-1,-1), 8),
+        ('BOTTOMPADDING', (0,1), (-1,-1), 8),
+    ]))
+    
+    story.append(rbi_table)
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
 
-st.markdown("---")
-st.subheader("📋 Auditable Compliance Work-hub")
-
-# 🛠️ INSTANT FIX: Absolute defense boundary layout safeguard loop block
-if combined_df.empty:
-    st.warning("⚠️ No regulatory matches found matching your active keyword query criteria matrix.")
-else:
-    for index, row in combined_df.iterrows():
-        task_unique_key = f"task_{row['Source']}_{index}_{row['Title'][:10].replace(' ', '_').lower()}"
-        current_saved_db_state = get_task_state(task_unique_key, default=False)
+# =====================================================================
+# NEW PRODUCTION ENGINE: SECURE OUTBOUND SMTP TRANSMISSION
+# =====================================================================
+def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
+    """Packages and transmits an encrypted corporate email with an immutable PDF ledger attached."""
+    try:
+        # Pull environment configurations from Streamlit's dashboard secrets matrix
+        smtp_server = st.secrets["email"]["smtp_server"]
+        smtp_port = int(st.secrets["email"]["smtp_port"])
+        sender_username = st.secrets["email"]["sender_username"]
+        sender_password = st.secrets["email"]["sender_password"]
         
-        with st.expander(f"{row['Risk Level']} - {row['Title']}", expanded=True):
-            c_text, c_box = st.columns([5, 1])
-            with c_text:
-                st.write(f"**Summary:** {row['Summary']}")
-                st.info(f"⚡ **Action:** {row['Recommended Action']}")
-            with c_box:
-                checked_status = st.checkbox("Attested", value=current_saved_db_state, key=f"w_{task_unique_key}")
-                if checked_status != current_saved_db_state:
-                    save_task_state(task_unique_key, checked_status)
-                    st.rerun()
+        # Build multipart metadata payload envelop structure
+        msg = MIMEMultipart()
+        msg['Subject'] = f"🛡️ [RegSecure AI Audit Alert] - Compliance Update Matrix: {agency_name}"
+        msg['From'] = sender_username
+        msg['To'] = recipient_email
+        
+        # Render a text summary context description block inside the layout
+        email_body = f"""Greetings Risk Management Desk,
+
+The RegSecure AI automated threat engine has parsed new system compliance records for {agency_name}. 
+
+Please review the attached immutable, executive-ready PDF audit log ledger instantly to confirm required system updates. 
+
+System Verification Hash Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+        """
+        msg.attach(MIMEText(email_body, 'plain'))
+        
+        # Inject the parsed bytes stream directly as a binary PDF attachment flowable
+        pdf_buffer.seek(0)
+        attachment = MIMEApplication(pdf_buffer.read(), _subtype="pdf")
+        attachment.add_header('Content-Disposition', 'attachment', filename=f"RegSecure_Ledger_{datetime.now().strftime('%Y%m%d')}.pdf")
+        msg.attach(attachment)
+        
+        # Establish secure STARTTLS communication socket line
