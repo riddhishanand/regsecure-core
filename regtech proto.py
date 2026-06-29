@@ -149,15 +149,6 @@ with st.sidebar:
             st.session_state["forced_premium_override"] = st.toggle("Activate Premium Tier", value=False)
         elif admin_passkey:
             st.error("Invalid Override Token Configuration")
-                st.error("Invalid Override Token Configuration")
-
-data_pool = st.session_state["active_matrix"]
-processed_alerts = []
-for entry in data_pool:
-    risk, action = assign_risk_and_action(entry["title"], reg_short_key)
-   # --- Layout Grid Workspace Matrix Construction ---
-# Dynamic evaluation check combining manual storage flags and administrative manual updates
-    if st.session_state.get("forced_premium_override", False) == True:
         user_tier_status = "premium"
     else:
         user_tier_status = "free"
