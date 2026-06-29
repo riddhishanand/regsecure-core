@@ -197,11 +197,24 @@ with left_panel:
         qr_code_image_url = f"https://googleapis.com{urllib.parse.quote(upi_url)}"
         
         with st.container(border=True):
-            st.markdown("#### 💳 Scan to Unlock Premium Tier Access")
-            st.image(qr_code_image_url, caption=f"Scan with GPay, PhonePe, or Paytm to route ₹{subscription_price}", width=200)
+            with st.container(border=True):
+            st.markdown("#### 💳 Open UPI Payment Portal")
+            
+            # Formulate the raw merchant intent deep-link structure
+            upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
+            
+            # Render an interactive, direct web-intent hyperlinked link button
+            st.markdown(
+                f'<a href="{upi_url}" target="_blank">'
+                f'<button style="width:100%; background-color:#FF4B4B; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:16px;">'
+                f'🚀 Click to Open in GPay / Paytm / PhonePe'
+                f'</button></a>', 
+                unsafe_allowed_html=True
+            )
+            
             st.markdown(f"**Direct UPI ID:** `{my_upi_id}`")
+            st.markdown(f"**Target Due:** `₹{subscription_price}`")
             st.warning("📩 Following payment transfer compilation, route your confirmation snapshot ledger directly to riddhishanand10@gmail.com for database activation routing.")
-
     st.markdown("---")
     st.markdown("### ✉️ Security Distribution Engine")
     recipient_address = st.text_input("Executive Desk Delivery Address", value="riddhishanand10@gmail.com")
