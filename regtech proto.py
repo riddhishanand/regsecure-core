@@ -4,7 +4,18 @@ import spacy
 from datetime import datetime
 
 # Initialize English NLP model for legal text keyword analysis
-nlp = spacy.load("en_core_web_sm")
+import os
+import subprocess
+import sys
+import spacy
+
+# Automatically download the model if it's not already installed
+try:
+    nlp = spacy.load("en_core_web_sm")
+    # or if that fails:
+except OSError:
+    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
+    nlp = spacy.load("en_core_web_sm")
 
 # Real live endpoint for RBI Notifications via RSS Feed
 RBI_RSS_URL = "https://rbi.org.in"
