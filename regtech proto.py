@@ -1,5 +1,6 @@
 import io
-import urllib.request, urllib.parse
+import urllib.request
+import urllib.parse
 import pandas as pd
 import feedparser
 import yaml
@@ -105,10 +106,9 @@ authenticator = stauth.Authenticate(
 
 st.set_page_config(page_title="RegSecure AI Dashboard", page_icon="🛡️", layout="wide")
 
-# --- Step C: Render Login Widget with Correct Parameters ---
+# --- Step C: Render Login Widget ---
 authenticator.login()
 
-# Manage application flow based on authentication state
 if st.session_state.get("authentication_status") == False:
     st.error('Authentication Error: Invalid username or security credentials.')
     st.stop()
@@ -116,12 +116,11 @@ elif st.session_state.get("authentication_status") == None:
     st.warning('Please enter your authorized corporate enterprise credentials.')
     st.stop()
 
-# Get secure verified metadata tokens
 name = st.session_state["name"]
 username = st.session_state["username"]
 
 # -------------------------------------------------------------
-# SECURE ENTERPRISE ZONE (Completely flat code path level)
+# SECURE ENTERPRISE ZONE
 # -------------------------------------------------------------
 st.title("🛡️ RegSecure AI Enterprise Platform")
 st.markdown("### Multi-Regulatory Compliance Matrix & Autonomous Response Center")
@@ -142,6 +141,7 @@ with st.sidebar:
     authenticator.logout('Sign Out of Secure Portal', 'sidebar')
     st.markdown("---")
     
+    # Clean, Standalone Admin Panel
     with st.expander("⚙️ Admin Portal (Hidden Grid)"):
         admin_passkey = st.text_input("Master Override Passkey", type="password", key="admin_master_passkey_ti")
         if admin_passkey == "riddhish2026":
@@ -149,15 +149,42 @@ with st.sidebar:
             st.session_state["forced_premium_override"] = st.toggle("Activate Premium Tier", value=False)
         elif admin_passkey:
             st.error("Invalid Override Token Configuration")
-        user_tier_status = "premium"
-    else:
-        user_tier_status = "free"
+
+if "active_matrix" not in st.session_state or st.session_state.get("current_agency") != reg_short_key:
+    st.session_state["active_matrix"] = generate_local_fallback(reg_short_key)
+    st.session_state["current_agency"] = reg_short_key
+
+if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
+    with st.spinner("Quoting remote schema logs..."):
+        live_items = pull_live_rss(rss_feed_mapping[reg_short_key])
+        if live_items:
+            st.session_state["active_matrix"] = live_items
+            st.toast("Live RSS Sync Successful!", icon="✅")
+            st.rerun()
+
+data_pool = st.session_state["active_matrix"]
+processed_alerts = []
+for entry in data_pool:
+    risk, action = assign_risk_and_action(entry["title"], reg_short_key)
+    processed_alerts.append({
+        "Title": entry["title"],
+        "Summary": entry["summary"],
+        "Link": entry["link"],
+        "Risk Level": risk,
+        "Recommended Action": action
+    })
+
+df_alerts = pd.DataFrame(processed_alerts)
+
+# Dynamic Subscription Tier Checker Evaluator
+if st.session_state.get("forced_premium_override", False) == True:
+    user_tier_status = "premium"
+else:
+    user_tier_status = "free"
+
+left_panel, right_panel = st.columns([1, 2.2], gap="large")
 
 with left_panel:
-    # --- SUBSCRIPTION SETTING MANAGER ---
-    # Switch this text token string to "premium" once a user makes a payment!
-    user_tier_status = "free"  
-
     st.markdown("### 📥 Report Execution Desk")
     
     if user_tier_status == "premium":
@@ -174,14 +201,12 @@ with left_panel:
         st.error("🔒 Premium Feature Locked")
         st.info("Executive PDF compilation features require an enterprise tier Pro subscription profile configuration setup.")
         
-        # Peer-to-peer payment structural variables
         my_upi_id = "riddhishanand10@okaxis"  
-        business_name = "RegSecure AI Platform"
         subscription_price = "7999"  
+        
         st.markdown("#### 💳 Open UPI Payment Portal")
         upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
         
-        # Native Streamlit link button structure (Bulletproof and matches theme automatically)
         st.link_button(
             label="🚀 Click to Open in GPay / Paytm / PhonePe",
             url=upi_url,
@@ -199,23 +224,3 @@ with left_panel:
     
     if user_tier_status == "premium":
         if st.button("Transmit Immutable Audit Records", use_container_width=True):
-            st.success(f"Success! Immutable PDF report ledger safely routed to {recipient_address}.")
-    else:
-        st.button("Transmit Immutable Audit Records", use_container_width=True, disabled=True, help="Upgrade to unlock automated corporate email routing chains.")
-
-with right_panel:
-    st.markdown("### 📋 Regulatory Intelligence Directives")
-    for idx, row in df_alerts.iterrows():
-        task_uid = f"task_audit_{username}_{reg_short_key}_{idx}"
-        is_checked = get_task_state(task_uid, default=False)
-        
-        with st.expander(f"{row['Risk Level']} | {row['Title']}", expanded=(idx == 0)):
-            st.markdown(f"**Brief Summary:** {row['Summary']}")
-            with st.container(border=True):
-                st.markdown(f"**Deployment Rule:** {row['Recommended Action']}")
-            st.markdown(f"🔗 [Review Original Source Link]({row['Link']})")
-            
-            checked_state = st.checkbox("Sign-off task as fully deployed", value=is_checked, key=f"cb_{task_uid}")
-            if checked_state != is_checked:
-                save_task_state(task_uid, checked_state)
-                st.rerun()
