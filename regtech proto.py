@@ -151,3 +151,23 @@ else:
         print(compliance_violations.to_string())
     else:
         print("[+] System Clean: 100% of transactions conform to active legal restrictions.")
+# =====================================================================
+# 3. MAIN DASHBOARD UI DISPLAY LAYER
+# =====================================================================
+st.set_page_config(page_title="RegSecure AI Dashboard", layout="wide")
+
+st.title("🛡️ RegSecure AI Compliance Dashboard")
+st.subheader("Real-Time Automated Regulatory Monitor")
+
+# Fetch data using your clean fallback function
+with st.spinner("Analyzing regulatory feeds..."):
+    df_directives = fetch_latest_rbi_directives()
+
+# Display the alerts in a clean interactive table
+st.write("### 🚨 Latest Regulatory Alerts & Actions")
+st.dataframe(df_directives, use_container_width=True)
+
+# Add a mock analytics sidebar for context
+st.sidebar.header("⚙️ Compliance Settings")
+st.sidebar.success("✅ System Status: Active")
+st.sidebar.info("Monitoring Source: Reserve Bank of India (RBI)")
