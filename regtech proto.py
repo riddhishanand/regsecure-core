@@ -199,4 +199,4 @@ with c_refresh:
                 st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
 
 # ✅ UPGRADE: Encapsulating the remaining interface inside an explicit, isolated rendering layout engine container container 
-with st.container():
+
