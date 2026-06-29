@@ -142,23 +142,30 @@ with st.sidebar:
     authenticator.logout('Sign Out of Secure Portal', 'sidebar')
 
 if "active_matrix" not in st.session_state or st.session_state.get("current_agency") != reg_short_key:
-    st.session_state["active_matrix"] = generate_local_fallback(reg_short_key)
-    st.session_state["current_agency"] = reg_short_key
-
-if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
-    with st.spinner("Quoting remote schema logs..."):
-        live_items = pull_live_rss(rss_feed_mapping[reg_short_key])
-        if live_items:
-            st.session_state["active_matrix"] = live_items
-            st.toast("Live RSS Sync Successful!", icon="✅")
-            st.rerun()
+st.markdown("---")
+    # Secret administrative drop-down panel wrapper
+    with st.expander("⚙️ Admin Portal (Hidden Grid)"):
+        admin_passkey = st.text_input("Master Override Passkey", type="password", key="admin_master_passkey_ti")
+        
+        # Protect the toggle with a secret password only you know
+        if admin_passkey == "riddhish2026":
+            st.success("Authorized Access Node")
+            # Force the subscription override token straight into session storage
+            st.session_state["forced_premium_override"] = st.toggle("Activate Premium Tier", value=False)
+        else:
+            if admin_passkey:
+                st.error("Invalid Override Token Configuration")
 
 data_pool = st.session_state["active_matrix"]
 processed_alerts = []
 for entry in data_pool:
     risk, action = assign_risk_and_action(entry["title"], reg_short_key)
    # --- Layout Grid Workspace Matrix Construction ---
-left_panel, right_panel = st.columns([1, 2.2], gap="large")
+# Dynamic evaluation check combining manual storage flags and administrative manual updates
+    if st.session_state.get("forced_premium_override", False) == True:
+        user_tier_status = "premium"
+    else:
+        user_tier_status = "free"
 
 with left_panel:
     # --- SUBSCRIPTION SETTING MANAGER ---
