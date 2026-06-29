@@ -33,7 +33,7 @@ def get_task_state(key, default=False):
         row = cursor.fetchone()
         conn.close()
         if row is not None:
-            return bool(row)
+            return bool(row[0])
     except Exception:
         pass
     return default
@@ -199,5 +199,4 @@ with c_refresh:
                 st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
 
 raw_data_items = st.session_state["active_matrix"]
-
-# ✅ FIX PERMANENTLY: Inline list comprehension completely resolves multi-line loop block indentation traps
+processed_records = []
