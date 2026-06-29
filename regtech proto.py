@@ -153,9 +153,10 @@ if "active_matrix" not in st.session_state or st.session_state.get("current_agen
     st.session_state["active_matrix"] = generate_local_fallback(reg_short_key)
     st.session_state["current_agency"] = reg_short_key
 
+# --- Streamlit UI Layout and Logic Desk ---
 c_refresh, c_status = st.columns(2)
 with c_refresh:
-    if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
+    if st.button("🔄 Sync Production RSS Feed", use_container_width=True, key="sync_rss_feed_btn"):
         with st.spinner("Quoting remote schema logs..."):
             live_items = pull_live_rss(rss_feed_mapping[reg_short_key])
             if live_items:
@@ -165,20 +166,7 @@ with c_refresh:
             else:
                 st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
 
-# --- Line 156-166 stay indented like this ---
-c_refresh, c_status = st.columns(2)
-with c_refresh:
-    if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
-        with st.spinner("Quoting remote schema logs..."):
-            live_items = pull_live_rss(rss_feed_mapping[reg_short_key])
-            if live_items:
-                st.session_state["active_matrix"] = live_items
-                st.toast("Live RSS Sync Successful!", icon="✅")
-                st.rerun()
-            else:
-                st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
-
-# --- Line 168 onwards MUST be completely unindented (0 spaces) ---
+# --- Process Data Matrix (Completely Flush Left) ---
 data_pool = st.session_state["active_matrix"]
 processed_alerts = []
 for entry in data_pool:
@@ -192,4 +180,58 @@ for entry in data_pool:
     })
 
 df_alerts = pd.DataFrame(processed_alerts)
-# ... keep the rest of the file completely unindented as well ...
+
+# --- Metric Counters Layout ---
+high_count = len(df_alerts[df_alerts["Risk Level"].str.contains("HIGH")])
+med_count = len(df_alerts[df_alerts["Risk Level"].str.contains("MEDIUM")])
+low_count = len(df_alerts[df_alerts["Risk Level"].str.contains("LOW")])
+
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("Total Tracked Directives", len(df_alerts))
+m2.metric("Critical Actions (High)", high_count, delta=f"{high_count} Alerts" if high_count > 0 else None, delta_color="inverse")
+m3.metric("Operational Tasks (Medium)", med_count)
+m4.metric("Archived Notices (Low)", low_count)
+
+st.write("---")
+
+# --- Compliance Task Expansion Cards ---
+for idx, row in df_alerts.iterrows():
+    unique_task_key = f"{reg_short_key}_{idx}_{row['Title'][:20].replace(' ', '_')}"
+    saved_bool_state = get_task_state(unique_task_key, default=False)
+    
+    with st.expander(f"{row['Risk Level']} | {row['Title']}", expanded=True):
+        st.markdown(f"**Brief Summary:** {row['Summary']}")
+        st.info(f"**Deployment Rule:** {row['Recommended Action']}")
+        st.markdown(f"[Review Original Regulatory Source Link]({row['Link']})")
+        
+        user_checkbox = st.checkbox("Sign-off and mark task as fully deployed & auditable", value=saved_bool_state, key=unique_task_key)
+        if user_checkbox != saved_bool_state:
+            save_task_state(unique_task_key, user_checkbox)
+            st.rerun()
+
+# --- Sidebar Controls Desk ---
+st.sidebar.header("📥 Report Execution Desk")
+pdf_data_stream = generate_pdf_report(df_alerts, reg_short_key)
+
+st.sidebar.download_button(
+    label="Generate Executive PDF Report Ledger",
+    data=pdf_data_stream,
+    file_name=f"RegSecure_{reg_short_key}_Executive_Ledger.pdf",
+    mime="application/pdf",
+    use_container_width=True
+)
+
+st.sidebar.markdown("---")
+st.sidebar.header("📧 Security Distribution Engine")
+target_destination_email = st.sidebar.text_input("Executive Desk Delivery Address", placeholder="compliance@firm.com")
+
+if st.sidebar.button("Transmit Immutable Audit Records", use_container_width=True):
+    if not target_destination_email:
+        st.sidebar.error("Error: Please provide a valid production delivery target email address.")
+    else:
+        with st.spinner("Processing crypto-routing email layers..."):
+            success_status, output_message = dispatch_production_email(target_destination_email, pdf_data_stream, reg_short_key)
+            if success_status:
+                st.sidebar.success(output_message)
+            else:
+                st.sidebar.error(f"Relay Error Encountered: {output_message}")
