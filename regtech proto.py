@@ -33,7 +33,7 @@ def get_task_state(key, default=False):
         row = cursor.fetchone()
         conn.close()
         if row is not None:
-            return bool(row[0])
+            return bool(row)
     except Exception:
         pass
     return default
@@ -198,5 +198,5 @@ with c_refresh:
             else:
                 st.toast("Remote server timeout. Keeping secure offline matrix.", icon="⚠️")
 
-raw_data_items = st.session_state["active_matrix"]
-processed_records = []
+# ✅ UPGRADE: Encapsulating the remaining interface inside an explicit, isolated rendering layout engine container container 
+with st.container():
