@@ -1,7 +1,7 @@
 import io
 import sqlite3
 import smtplib  
-import urllib.request  # Added for strict text payload download handling
+import urllib.request  
 import pandas as pd
 import feedparser
 import streamlit as st
@@ -64,17 +64,26 @@ def assign_risk_and_action(title, regulator):
     else:
         return "🟢 LOW", f"[{reg_short} NOTICE] Record this regulatory change in quarterly compliance registers and archive files safely for legal tracking."
 
-def fetch_regulatory_directives(regulator):
+def generate_local_fallback(reg_key):
+    """Provides instantaneous, server-isolated data templates to avoid connection timeouts."""
+    if reg_key == "RBI":
+        return [
+            {"title": "Master Direction - Cyber Security Controls for Third-Party ATM Apps", "summary": "Guidelines detailing MFA requirements for switches.", "link": "https://rbi.org.in"},
+            {"title": "Amendment to Master Direction on Know Your Customer (KYC)", "summary": "Updates regarding periodic updation of low-risk accounts.", "link": "https://rbi.org.in"},
+            {"title": "Opening of New Branches and Core Banking Migration Guidelines", "summary": "Administrative procedural updates for expansions.", "link": "https://rbi.org.in"}
+        ]
+    elif reg_key == "SEBI":
+        return [
+            {"title": "Prohibition of Insider Trading (PIT) Structural Guidelines Update", "summary": "Tightening controls around tracking databases.", "link": "https://sebi.gov.in"},
+            {"title": "Mutual Fund Transparency & Enhanced Portfolio Disclosure Norms", "summary": "New mandates requiring comprehensive expense ratios tracking.", "link": "https://sebi.gov.in"}
+        ]
+    return [
+        {"title": "PFRDA National Pension System (NPS) Digital Exit Protocols", "summary": "Streamlining computational verification framework via facial recognition APIs.", "link": "https://pfrda.org.in"}
+    ]
+
+def pull_live_rss(feed_url):
+    """Isolates network requests to standalone user triggers with strict connection safety limits."""
     directives = []
-    rss_feed_mapping = {
-        "RBI": "https://rbi.org.in", 
-        "SEBI": "https://sebi.gov.in",
-        "PFRDA": "https://pfrda.org.in"
-    }
-    reg_key = "RBI" if "RBI" in regulator else ("SEBI" if "SEBI" in regulator else "PFRDA")
-    feed_url = rss_feed_mapping[reg_key]
-    
-    # Force a rigid 1.5-second download threshold on the text string extraction layer
     try:
         req = urllib.request.Request(feed_url, headers={'User-Agent': 'Mozilla/5.0'})
         with urllib.request.urlopen(req, timeout=1.5) as response:
@@ -84,43 +93,13 @@ def fetch_regulatory_directives(regulator):
                 for entry in feed.entries[:4]:
                     summary_text = entry.get("summary", entry.get("description", "No brief overview available."))
                     directives.append({
-                        "title": entry.get("title", "Untitled Alert"),
+                        "title": entry.get("title", "Untitled Live Alert"),
                         "summary": summary_text[:120] + "...",
                         "link": entry.get("link", "https://rbi.org.in")
                     })
     except Exception:
         pass
-        
-    if not directives:
-        if reg_key == "RBI":
-            directives = [
-                {"title": "Master Direction - Cyber Security Controls for Third-Party ATM Apps", "summary": "Guidelines detailing MFA requirements for switches.", "link": "https://rbi.org.in"},
-                {"title": "Amendment to Master Direction on Know Your Customer (KYC)", "summary": "Updates regarding periodic updation of low-risk accounts.", "link": "https://rbi.org.in"},
-                {"title": "Opening of New Branches and Core Banking Migration Guidelines", "summary": "Administrative procedural updates for expansions.", "link": "https://rbi.org.in"}
-            ]
-        elif reg_key == "SEBI":
-            directives = [
-                {"title": "Prohibition of Insider Trading (PIT) Structural Guidelines Update", "summary": "Tightening controls around tracking databases.", "link": "https://sebi.gov.in"},
-                {"title": "Mutual Fund Transparency & Enhanced Portfolio Disclosure Norms", "summary": "New mandates requiring comprehensive expense ratios tracking.", "link": "https://sebi.gov.in"}
-            ]
-        else:
-            directives = [
-                {"title": "PFRDA National Pension System (NPS) Digital Exit Protocols", "summary": "Streamlining computational verification framework via facial recognition APIs.", "link": "https://pfrda.org.in"}
-            ]
-            
-    processed_records = []
-    for item in directives:
-        risk, action = assign_risk_and_action(item["title"], regulator)
-        processed_records.append({
-            "Source": reg_key,
-            "Title": item["title"],
-            "Summary": item["summary"],
-            "Risk Level": risk,
-            "Recommended Action": action,
-            "Link": item["link"],
-            "Published": datetime.now().strftime("%Y-%m-%d")
-        })
-    return pd.DataFrame(processed_records)
+    return directives
 
 def generate_pdf_report(df, regulator):
     buffer = io.BytesIO()
@@ -185,6 +164,9 @@ def dispatch_production_email(recipient_email, pdf_buffer, agency_name):
     except Exception as e:
         return False, str(e)
 
+# =====================================================================
+# MAIN STREAMLIT VIEWPORT RUNTIME
+# =====================================================================
 st.set_page_config(page_title="RegSecure AI Dashboard", layout="wide")
 
 st.title("🛡️ RegSecure AI Enterprise Platform")
@@ -195,6 +177,23 @@ selected_agency = st.selectbox(
     ["Reserve Bank of India (RBI)", "Securities & Exchange Board (SEBI)", "Pension Fund Authority (PFRDA)"]
 )
 
-combined_df = fetch_regulatory_directives(selected_agency)
+reg_key = "RBI" if "RBI" in selected_agency else ("SEBI" if "SEBI" in selected_agency else "PFRDA")
+rss_feed_mapping = {
+    "RBI": "https://rbi.org.in", 
+    "SEBI": "https://sebi.gov.in",
+    "PFRDA": "https://pfrda.org.in"
+}
 
-search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", key="global_search_input")
+# Maintain persistent operational states using Session State mapping layers
+if "active_matrix" not in st.session_state or st.session_state.get("current_agency") != reg_key:
+    st.session_state["active_matrix"] = generate_local_fallback(reg_key)
+    st.session_state["current_agency"] = reg_key
+
+# ✅ UPGRADE: Client-Side Triggered Outbound Connection Component
+c_refresh, c_status = st.columns([1, 4])
+with c_refresh:
+    if st.button("🔄 Sync Production RSS Feed", use_container_width=True):
+        with st.spinner("Quoting remote schema logs..."):
+            live_items = pull_live_rss(rss_feed_mapping[reg_key])
+            if live_items:
+                st.session_state["active_matrix"] = live_items
