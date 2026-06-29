@@ -185,16 +185,15 @@ with left_panel:
         my_upi_id = "riddhishanand10@okaxis"  
         business_name = "RegSecure AI Platform"
         subscription_price = "7999"  
-        
         st.markdown("#### 💳 Open UPI Payment Portal")
         upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
         
-        st.markdown(
-            f'<a href="{upi_url}" target="_blank">'
-            f'<button style="width:100%; background-color:#FF4B4B; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:16px;">'
-            f'🚀 Click to Open in GPay / Paytm / PhonePe'
-            f'</button></a>', 
-            unsafe_allowed_html=True
+        # Native Streamlit link button structure (Bulletproof and matches theme automatically)
+        st.link_button(
+            label="🚀 Click to Open in GPay / Paytm / PhonePe",
+            url=upi_url,
+            use_container_width=True,
+            type="primary"
         )
         
         st.markdown(f"**Direct UPI ID:** `{my_upi_id}`")
