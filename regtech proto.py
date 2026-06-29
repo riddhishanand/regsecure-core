@@ -1,47 +1,53 @@
+import io
 import feedparser
 import pandas as pd
 import streamlit as st
 from datetime import datetime
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
-# Lightweight alternative to spaCy for processing regulatory text
+# Lightweight internal NLP parser setup
 class LightNLP:
-    def __init__(self):
-        pass
-    def __call__(self, text):
-        return LightDoc(text)
-
+    def __call__(self, text): return LightDoc(text)
 class LightDoc:
     def __init__(self, text):
         self.text = text
-        self.ents = [] 
-
+        self.ents = []
 nlp = LightNLP()
 
-# Endpoint for RBI Notifications
-RBI_RSS_URL = "https://rbi.org.in"
+# Multi-Regulatory Feeds Configuration
+REG_FEEDS = {
+    "Reserve Bank of India (RBI)": "https://rbi.org.in",
+    "Securities and Exchange Board of India (SEBI)": "https://sebi.gov.in",
+    "Pension Fund Regulatory and Development Authority (PFRDA)": "https://pfrda.org.in"
+}
 
-def assign_risk_and_action(title):
+def assign_risk_and_action(title, regulator):
     """Rule-based engine to tag risk levels and generate tailored action items."""
     title_lower = title.lower()
-    if "cyber" in title_lower or "security" in title_lower or "atm" in title_lower:
-        return "🔴 HIGH", "Conduct immediate vulnerability scans, audit financial switches, and enforce multi-factor authentication (MFA) within 15 days."
-    elif "kyc" in title_lower or "customer" in title_lower or "aml" in title_lower:
-        return "🟡 MEDIUM", "Review digital onboarding processes, update system validation scripts for low-risk tiers, and re-train frontline compliance staff."
+    reg_short = "RBI" if "RBI" in regulator else ("SEBI" if "SEBI" in regulator else "PFRDA")
+    
+    if any(k in title_lower for k in ["cyber", "security", "atm", "fraud", "vulnerability"]):
+        return "🔴 HIGH", f"[{reg_short} CRITICAL] Enforce immediate technical audits, deploy mandatory MFA protocols, and submit an absolute status report to security officers within 15 days."
+    elif any(k in title_lower for k in ["kyc", "customer", "aml", "disclosure", "insider", "audit"]):
+        return "🟡 MEDIUM", f"[{reg_short} COMPLIANCE] Update organizational operational frameworks, run system validation tests on internal databases, and host frontline team review workshops."
     else:
-        return "🟢 LOW", "Review changes during quarterly internal audit cycles and archive circular for documentation."
+        return "🟢 LOW", f"[{reg_short} NOTICE] Record this regulatory change in quarterly compliance registers and archive files safely for legal tracking."
 
-def fetch_latest_rbi_directives():
-    """Fetches real-time regulatory announcements safely with a strict connection timeout."""
+def fetch_regulatory_directives(regulator, url):
+    """Fetches real-time regulatory announcements with timeout and smart mock fallbacks."""
     import urllib.request
     directives = []
     
     try:
-        response = urllib.request.urlopen(RBI_RSS_URL, timeout=5)
+        response = urllib.request.urlopen(url, timeout=4)
         feed = feedparser.parse(response.read())
-        
         for entry in feed.entries[:5]:
-            risk, action = assign_risk_and_action(entry.title)
+            risk, action = assign_risk_and_action(entry.title, regulator)
             directives.append({
+                "Source": regulator,
                 "Title": entry.title,
                 "Summary": entry.summary if 'summary' in entry else entry.title,
                 "Risk Level": risk,
@@ -49,30 +55,31 @@ def fetch_latest_rbi_directives():
                 "Link": entry.link,
                 "Published": entry.get("published", datetime.now().strftime("%Y-%m-%d"))
             })
-    except Exception as e:
+    except Exception:
         pass  
         
     if not directives:
-        raw_data = [
-            {
-                "title": "Master Direction - Cyber Security Controls for Third-Party ATM Apps",
-                "summary": "Compliance guidelines detailing multifactor authentication requirements for financial switches.",
-                "link": "https://rbi.org.in"
-            },
-            {
-                "title": "Amendment to Master Direction on Know Your Customer (KYC)",
-                "summary": "Updates regarding periodic updation of KYC for low-risk accounts via digital channels.",
-                "link": "https://rbi.org.in"
-            },
-            {
-                "title": "Opening of New Branches and Core Banking Migration Guidelines",
-                "summary": "Administrative procedural updates for banking expansions into tier-3 semi-urban localities.",
-                "link": "https://rbi.org.in"
-            }
-        ]
+        # Specialized fallbacks tailored to the active regulatory body selected
+        if "RBI" in regulator:
+            raw_data = [
+                {"title": "Master Direction - Cyber Security Controls for Third-Party ATM Apps", "summary": "Compliance guidelines detailing multifactor authentication requirements for financial switches.", "link": "https://rbi.org.in"},
+                {"title": "Amendment to Master Direction on Know Your Customer (KYC)", "summary": "Updates regarding periodic updation of KYC for low-risk accounts via digital channels.", "link": "https://rbi.org.in"},
+                {"title": "Opening of New Branches and Core Banking Migration Guidelines", "summary": "Administrative procedural updates for banking expansions into tier-3 semi-urban localities.", "link": "https://rbi.org.in"}
+            ]
+        elif "SEBI" in regulator:
+            raw_data = [
+                {"title": "Prohibition of Insider Trading (PIT) Structural Guidelines Update", "summary": "Tightening controls around digital tracking databases for specified connected corporate individuals.", "link": "https://sebi.gov.in"},
+                {"title": "Mutual Fund Transparency & Enhanced Portfolio Disclosure Norms", "summary": "New mandates requiring comprehensive asset and expense ratios tracking updates weekly.", "link": "https://sebi.gov.in"}
+            ]
+        else:
+            raw_data = [
+                {"title": "PFRDA National Pension System (NPS) Digital Exit Protocols", "summary": "Streamlining computational verification framework via facial recognition APIs on point-of-presence desks.", "link": "https://pfrda.org.in"}
+            ]
+            
         for item in raw_data:
-            risk, action = assign_risk_and_action(item["title"])
+            risk, action = assign_risk_and_action(item["title"], regulator)
             directives.append({
+                "Source": regulator,
                 "Title": item["title"],
                 "Summary": item["summary"],
                 "Risk Level": risk,
@@ -83,22 +90,80 @@ def fetch_latest_rbi_directives():
         
     return pd.DataFrame(directives)
 
+def generate_pdf_report(df, regulator):
+    """Generates a professional executive-ready PDF report buffer using ReportLab."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+    story = []
+    
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('DocTitle', parent=styles['Heading1'], fontSize=22, textColor=colors.HexColor("#1A365D"), spaceAfter=10)
+    sub_style = ParagraphStyle('DocSub', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor("#4A5568"), spaceAfter=20)
+    body_style = ParagraphStyle('TableBody', parent=styles['Normal'], fontSize=8, leading=10)
+    
+    story.append(Paragraph("🛡️ RegSecure AI Executive Compliance Report", title_style))
+    story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Target Agency: {regulator}", sub_style))
+    story.append(Spacer(1, 10))
+    
+    table_data = [["Risk Priority", "Regulatory Alert Directive Details"]]
+    for _, row in df.iterrows():
+        content_text = f"<b>{row['Title']}</b><br/><i>Summary:</i> {row['Summary']}<br/><b>Required Action:</b> {row['Recommended Action']}"
+        table_data.append([
+            Paragraph(f"<b>{row['Risk Level']}</b>", body_style),
+            Paragraph(content_text, body_style)
+        ])
+    
+    rbi_table = Table(table_data, colWidths=[80, 450])
+    rbi_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (1,0), colors.HexColor("#1A365D")),
+        ('TEXTCOLOR', (0,0), (1,0), colors.white),
+        ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 8),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor("#CBD5E1")),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('TOPPADDING', (0,1), (-1,-1), 8),
+        ('BOTTOMPADDING', (0,1), (-1,-1), 8),
+    ]))
+    
+    story.append(rbi_table)
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
 # =====================================================================
 # MAIN DASHBOARD UI DISPLAY LAYER
 # =====================================================================
 st.set_page_config(page_title="RegSecure AI Dashboard", layout="wide")
 
-st.title("🛡️ RegSecure AI Compliance Dashboard")
-st.subheader("Real-Time Automated Regulatory Monitor & Intelligence Engine")
+st.title("🛡️ RegSecure AI Enterprise Platform")
+st.subheader("Multi-Regulatory Compliance Matrix & Autonomous Response Center")
 
-# 1. Fetch Data
-with st.spinner("Analyzing regulatory feeds..."):
-    df_directives = fetch_latest_rbi_directives()
+# Feature 1: Multi-Regulatory Source Selection Tab/Dropdown
+selected_regulator = st.selectbox(
+    "🌐 Switch Active Regulatory Intelligence Feed:",
+    list(REG_FEEDS.keys())
+)
 
-# 2. Search & Filter Interface
-st.write("### 🔍 Search & Filter Circulars")
-search_query = st.text_input("Type any keyword (e.g., 'KYC', 'Cyber', 'Security') to filter regulations instantly:", "")
+# Fetch Data for selected source
+with st.spinner(f"Extracting intelligence maps from {selected_regulator}..."):
+    df_directives = fetch_regulatory_directives(selected_regulator, REG_FEEDS[selected_regulator])
 
+# Feature 2: Email and PDF Download Actions Hub
+col_a, col_b = st.columns([3, 1])
+with col_a:
+    search_query = st.text_input("🔍 Search active monitoring datagrid by keyword instantly:", "")
+with col_b:
+    st.write("<div style='padding-top:25px;'></div>", unsafe_allow_html=True)
+    pdf_buffer = generate_pdf_report(df_directives, selected_regulator)
+    st.download_button(
+        label="📥 Download PDF Audit Report",
+        data=pdf_buffer,
+        file_name=f"RegSecure_Audit_{datetime.now().strftime('%Y%m%d')}.pdf",
+        mime="application/pdf",
+        use_container_width=True
+    )
+
+# Filter Data Grid Based on Search
 filtered_df = df_directives
 if search_query:
     filtered_df = df_directives[
@@ -106,45 +171,31 @@ if search_query:
         df_directives['Summary'].str.contains(search_query, case=False)
     ]
 
-# 3. Display Data Grid
-st.write("### 🚨 Latest Regulatory Alerts & Actions")
-# Use row selection feature to feed into the action planner
-selected_row = st.dataframe(
+# Display Primary Grid
+st.write("### 🚨 Live Regulatory Alerts Map")
+st.dataframe(
     filtered_df, 
     use_container_width=True,
-    column_config={
-        "Link": st.column_config.LinkColumn("Original Circular URL"),
-        "Risk Level": st.column_config.TextColumn("Risk Priority")
-    }
+    column_config={"Link": st.column_config.LinkColumn("Reference Link")}
 )
 
-# 4. Action Item Planner Panel
+# Feature 3: Action Planner Integrated with instant Email simulation
 st.write("---")
-st.write("### 📋 AI Operational Action Planner")
-st.markdown("Below are the automated internal workflows generated for your organization's compliance tracking:")
+st.write("### 📋 AI Operational Action Planner & Distribution Hub")
 
 for index, row in filtered_df.iterrows():
     risk_color = "red" if "🔴" in row["Risk Level"] else ("orange" if "🟡" in row["Risk Level"] else "green")
     
-    with st.expander(f"⚠️ Action Required for: {row['Title']} ({row['Risk Level']})"):
-        col1, col2 = st.columns([1, 2])
-        with col1:
+    with st.expander(f"💼 Task Protocol: {row['Title']} ({row['Risk Level']})"):
+        c1, c2 = st.columns([3, 2])
+        with c1:
+            st.markdown(f"**Regulatory Source:** {row['Source']}")
             st.markdown(f"**Risk Severity:** :{risk_color}[{row['Risk Level']}]")
-            st.markdown(f"**Date Logged:** {row['Published']}")
-        with col2:
-            st.markdown("**Executive Summary:**")
-            st.caption(row["Summary"])
-            st.markdown("**🎯 Step-by-Step Task Brief for Operations Team:**")
+            st.markdown(f"**Action Brief:**")
             st.info(row["Recommended Action"])
+        with c2:
+            st.markdown("**📧 Instant Internal Security Alert Dispatch**")
+            target_email = st.text_input("Enter target ops email address:", "compliance-ops@organization.local", key=f"email_inp_{index}")
             
-            # Interactive Checkboxes for tracking progress
-            st.checkbox("Task Assigned to Compliance Officer", key=f"assign_{index}")
-            st.checkbox("Gap Analysis Against Current Systems Initiated", key=f"gap_{index}")
-            st.checkbox("Final Sign-off & Audit Trail Archived", key=f"audit_{index}")
-
-# Sidebar
-st.sidebar.header("⚙️ Compliance Settings")
-st.sidebar.success("✅ System Status: Active")
-st.sidebar.info("Monitoring Source: Reserve Bank of India (RBI)")
-st.sidebar.metric(label="Total Tracked Alerts", value=len(df_directives))
-st.sidebar.metric(label="High Risk Items", value=len(df_directives[df_directives['Risk Level'].str.contains("🔴")]))
+            if st.button("⚡ Dispatch Email Alert Brief", key=f"btn_email_{index}"):
+                # Simulated production dispatch loop logs directly into server context
