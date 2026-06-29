@@ -197,22 +197,22 @@ with left_panel:
         qr_code_image_url = f"https://googleapis.com{urllib.parse.quote(upi_url)}"
         
         with st.container(border=True):
-            with st.container(border=True):
-            st.markdown("#### 💳 Open UPI Payment Portal")
-            
-            # Formulate the raw merchant intent deep-link structure
-            upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
-            
-            # Render an interactive, direct web-intent hyperlinked link button
-            st.markdown(
-                f'<a href="{upi_url}" target="_blank">'
-                f'<button style="width:100%; background-color:#FF4B4B; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:16px;">'
-                f'🚀 Click to Open in GPay / Paytm / PhonePe'
-                f'</button></a>', 
-                unsafe_allowed_html=True
-            )
-            
-            st.markdown(f"**Direct UPI ID:** `{my_upi_id}`")
+# --- FLAT UPI INTENT DESK ---
+        st.markdown("#### 💳 Open UPI Payment Portal")
+        
+        upi_url = f"upi://pay?pa={my_upi_id}&pn=RegSecure%20AI&am={subscription_price}&cu=INR"
+        
+        st.markdown(
+            f'<a href="{upi_url}" target="_blank">'
+            f'<button style="width:100%; background-color:#FF4B4B; color:white; border:none; padding:12px; border-radius:5px; font-weight:bold; cursor:pointer; font-size:16px;">'
+            f'🚀 Click to Open in GPay / Paytm / PhonePe'
+            f'</button></a>', 
+            unsafe_allowed_html=True
+        )
+        
+        st.markdown(f"**Direct UPI ID:** `{my_upi_id}`")
+        st.markdown(f"**Target Due:** `₹{subscription_price}`")
+        st.warning("📩 Following payment transfer compilation, route your confirmation snapshot ledger directly to riddhishanand10@gmail.com for database activation routing.")
             st.markdown(f"**Target Due:** `₹{subscription_price}`")
             st.warning("📩 Following payment transfer compilation, route your confirmation snapshot ledger directly to riddhishanand10@gmail.com for database activation routing.")
     st.markdown("---")
